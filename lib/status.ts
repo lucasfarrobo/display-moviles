@@ -67,7 +67,7 @@ export function buildNovedadTexto(input: {
   const parts: string[] = [];
 
   const obs = input.observaciones?.trim();
-  if (obs) parts.push(obs);
+  if (obs && !isSinNovedadTexto(obs)) parts.push(obs);
 
   const hi = input.higieneInterior?.trim();
   const he = input.higieneExterior?.trim();
@@ -86,7 +86,12 @@ export function buildNovedadTexto(input: {
   return parts.join("\n");
 }
 
-/** Entradas vacías o de inspección conforme sin observaciones reales. */
+/** Entradas vacías o sin observación real (inspección conforme, etc.). */
 export function isSinNovedadTexto(texto: string): boolean {
-  return /sin\s+novedad/i.test(texto.trim());
+  const t = texto.trim().toLowerCase();
+  if (!t) return true;
+  if (/sin\s+novedad/i.test(t)) return true;
+  if (/^inspecci[oó]n conforme\.?$/i.test(t)) return true;
+  if (/^sin novedades?\.\s*inspecci[oó]n conforme\.?$/i.test(t)) return true;
+  return false;
 }

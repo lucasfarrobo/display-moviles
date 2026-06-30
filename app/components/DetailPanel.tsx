@@ -42,6 +42,7 @@ function HistorialItem({ item, isLatest }: { item: Novedad; isLatest: boolean })
 
 export function DetailPanel({ mobile, onClose }: Props) {
   const cfg = STATUS_CONFIG[mobile.status];
+  const historial = mobile.historial.filter((n) => !isSinNovedadTexto(n.texto));
 
   return (
     <div className="bg-slate-900 border border-slate-700 rounded-xl p-5 max-h-[85vh] overflow-y-auto">
@@ -84,15 +85,15 @@ export function DetailPanel({ mobile, onClose }: Props) {
 
       <div>
         <h3 className="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-3">
-          Historial de novedades ({mobile.totalNovedades})
+          Historial de novedades ({historial.length})
         </h3>
         <div className="space-y-0">
-          {mobile.historial.length === 0 ? (
+          {historial.length === 0 ? (
             <p className="text-slate-500 text-sm">
               No hay observaciones en el historial.
             </p>
           ) : (
-            mobile.historial.map((item) => (
+            historial.map((item) => (
               <HistorialItem
                 key={item.id}
                 item={item}

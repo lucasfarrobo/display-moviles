@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { Mobile, MobilesResponse, Status } from "@/lib/types";
 import { MOCK_MOBILES } from "@/lib/types";
 import { withBasePath } from "@/lib/basePath";
+import { sanitizeMobiles } from "@/lib/sanitizeMobile";
 import { MobileCard } from "./MobileCard";
 import { DetailPanel } from "./DetailPanel";
 
@@ -31,7 +32,7 @@ export function Dashboard() {
         return res.json() as Promise<MobilesResponse>;
       })
       .then((data) => {
-        setMobiles(data.mobiles);
+        setMobiles(sanitizeMobiles(data.mobiles));
         setDataSource(data.source);
         setUpdatedAt(data.updatedAt);
       })
