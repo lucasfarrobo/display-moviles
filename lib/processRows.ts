@@ -1,5 +1,5 @@
 import type { Mobile, Novedad } from "./types";
-import { parseMobileField } from "./parseMobile";
+import { parseMobileField, type ParsedMobile } from "./parseMobile";
 import {
   buildNovedadTexto,
   inferStatusFromText,
@@ -90,7 +90,7 @@ function resolveColumns(headers: string[]) {
 function rowToNovedad(
   row: SheetRow,
   cols: ReturnType<typeof resolveColumns>
-): { parsed: ReturnType<typeof parseMobileField>; novedad: Novedad } | null {
+): { parsed: ParsedMobile; novedad: Novedad } | null {
   const mobileRaw = getCell(row.cells, cols.mobile);
   const parsed = parseMobileField(mobileRaw);
   if (!parsed) return null;
@@ -139,7 +139,7 @@ export function buildMobilesFromRows(rows: SheetRow[]): Mobile[] {
   const byKey = new Map<
     string,
     {
-      parsed: NonNullable<ReturnType<typeof parseMobileField>>;
+      parsed: ParsedMobile;
       novedades: Novedad[];
     }
   >();
@@ -169,7 +169,7 @@ export function buildMobilesFromRows(rows: SheetRow[]): Mobile[] {
 
   const mobiles: Mobile[] = [];
 
-  for (const [key, { parsed, novedades }] of byKey) {
+  for (const [key, { parsed, novedades }] of Array.from(byKey.entries())) {
     const historial = [...novedades].sort((a, b) => {
       if (b.timestampMs !== a.timestampMs) {
         return b.timestampMs - a.timestampMs;
