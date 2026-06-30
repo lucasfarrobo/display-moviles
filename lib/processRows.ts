@@ -7,6 +7,7 @@ import {
   statusFromInspection,
 } from "./status";
 import { SHEET_CONFIG, columnIndex } from "./config";
+import { resolveRowTimestamp } from "./timestamp";
 
 export interface SheetRow {
   rowIndex: number;
@@ -16,31 +17,6 @@ export interface SheetRow {
 function getCell(row: string[], oneBasedCol: number): string {
   if (oneBasedCol <= 0) return "";
   return row[columnIndex(oneBasedCol)]?.trim() ?? "";
-}
-
-export function parseTimestamp(raw: string): number {
-  if (!raw) return 0;
-
-  const direct = Date.parse(raw);
-  if (!Number.isNaN(direct)) return direct;
-
-  const match = raw.match(
-    /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/
-  );
-  if (match) {
-    const [, d, m, y, hh = "0", mm = "0", ss = "0"] = match;
-    const year = y.length === 2 ? 2000 + Number(y) : Number(y);
-    return new Date(
-      year,
-      Number(m) - 1,
-      Number(d),
-      Number(hh),
-      Number(mm),
-      Number(ss)
-    ).getTime();
-  }
-
-  return 0;
 }
 
 function findHeaderRowIndex(rows: SheetRow[]): number {
@@ -62,6 +38,8 @@ function resolveColumns(headers: string[]) {
   const cfg = SHEET_CONFIG;
   return {
     timestamp: cfg.columnTimestamp,
+    fecha: cfg.columnFecha,
+    hora: cfg.columnHora,
     mobile:
       cfg.columnMobile ||
       detectColumnByHeader(headers, ["columna 6", "móvil", "movil", "dominio"]),
@@ -96,7 +74,13 @@ function rowToNovedad(
   if (!parsed) return null;
 
   const timestampRaw = getCell(row.cells, cols.timestamp);
-  const timestampMs = parseTimestamp(timestampRaw);
+  const fechaRaw = getCell(row.cells, cols.fecha);
+  const horaRaw = getCell(row.cells, cols.hora);
+  const { timestampMs, timestamp } = resolveRowTimestamp({
+    marcaTemporal: timestampRaw,
+    fecha: fechaRaw,
+    hora: horaRaw,
+  });
 
   const observaciones = getCell(row.cells, cols.novedad);
   const higieneInterior = getCell(row.cells, cols.higieneInterior);
@@ -117,7 +101,7 @@ function rowToNovedad(
 
   const novedad: Novedad = {
     id: `row-${row.rowIndex}`,
-    timestamp: timestampRaw || "Sin fecha",
+    timestamp,
     timestampMs,
     status,
     texto: novedadText,
@@ -174,7 +158,9 @@ export function buildMobilesFromRows(rows: SheetRow[]): Mobile[] {
       if (b.timestampMs !== a.timestampMs) {
         return b.timestampMs - a.timestampMs;
       }
-      return b.id.localeCompare(a.id);
+      const rowA = Number(a.id.replace("row-", "")) || 0;
+      const rowB = Number(b.id.replace("row-", "")) || 0;
+      return rowB - rowA;
     });
 
     const ultima = historial[0];

@@ -11,6 +11,8 @@ export const SHEET_CONFIG = {
   sheetName: process.env.GOOGLE_SHEET_NAME ?? "",
 
   columnTimestamp: Number(process.env.SHEET_COL_TIMESTAMP ?? 1),
+  columnFecha: Number(process.env.SHEET_COL_FECHA ?? 5),
+  columnHora: Number(process.env.SHEET_COL_HORA ?? 6),
   /** Campo del formulario "Columna 6" → columna G (7) del sheet */
   columnMobile: Number(process.env.SHEET_COL_MOBILE ?? 7),
   columnReportadoPor: Number(process.env.SHEET_COL_REPORTADO_POR ?? 4),
