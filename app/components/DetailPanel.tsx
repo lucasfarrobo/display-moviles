@@ -1,6 +1,7 @@
 "use client";
 
 import type { Mobile, Novedad } from "@/lib/types";
+import { isSinNovedadTexto } from "@/lib/status";
 import { STATUS_CONFIG } from "./MobileCard";
 
 interface Props {
@@ -86,9 +87,22 @@ export function DetailPanel({ mobile, onClose }: Props) {
           Historial de novedades ({mobile.totalNovedades})
         </h3>
         <div className="space-y-0">
-          {mobile.historial.map((item, idx) => (
-            <HistorialItem key={item.id} item={item} isLatest={idx === 0} />
-          ))}
+          {mobile.historial.length === 0 ? (
+            <p className="text-slate-500 text-sm">
+              No hay observaciones en el historial.
+            </p>
+          ) : (
+            mobile.historial.map((item) => (
+              <HistorialItem
+                key={item.id}
+                item={item}
+                isLatest={
+                  item.id === mobile.ultimaNovedad.id &&
+                  !isSinNovedadTexto(mobile.ultimaNovedad.texto)
+                }
+              />
+            ))
+          )}
         </div>
       </div>
     </div>

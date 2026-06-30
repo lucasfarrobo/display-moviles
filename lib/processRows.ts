@@ -3,6 +3,7 @@ import { parseMobileField, type ParsedMobile } from "./parseMobile";
 import {
   buildNovedadTexto,
   inferStatusFromText,
+  isSinNovedadTexto,
   mapEstadoToStatus,
   statusFromInspection,
 } from "./status";
@@ -154,7 +155,7 @@ export function buildMobilesFromRows(rows: SheetRow[]): Mobile[] {
   const mobiles: Mobile[] = [];
 
   for (const [key, { parsed, novedades }] of Array.from(byKey.entries())) {
-    const historial = [...novedades].sort((a, b) => {
+    const sorted = [...novedades].sort((a, b) => {
       if (b.timestampMs !== a.timestampMs) {
         return b.timestampMs - a.timestampMs;
       }
@@ -163,7 +164,8 @@ export function buildMobilesFromRows(rows: SheetRow[]): Mobile[] {
       return rowB - rowA;
     });
 
-    const ultima = historial[0];
+    const ultima = sorted[0];
+    const historial = sorted.filter((n) => !isSinNovedadTexto(n.texto));
     mobiles.push({
       id: key,
       numero: parsed.numero,

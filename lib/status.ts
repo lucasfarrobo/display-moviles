@@ -85,3 +85,8 @@ export function buildNovedadTexto(input: {
 
   return parts.join("\n");
 }
+
+/** Entradas vacías o de inspección conforme sin observaciones reales. */
+export function isSinNovedadTexto(texto: string): boolean {
+  return /sin\s+novedad/i.test(texto.trim());
+}

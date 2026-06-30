@@ -1,6 +1,7 @@
 "use client";
 
 import type { Mobile, Status } from "@/lib/types";
+import { isSinNovedadTexto } from "@/lib/status";
 
 const STATUS_CONFIG: Record<
   Status,
@@ -40,7 +41,10 @@ interface Props {
 
 export function MobileCard({ mobile, selected, onClick }: Props) {
   const cfg = STATUS_CONFIG[mobile.status];
-  const preview = mobile.ultimaNovedad.texto;
+  const rawPreview = mobile.ultimaNovedad.texto;
+  const preview = isSinNovedadTexto(rawPreview)
+    ? mobile.historial.find((n) => !isSinNovedadTexto(n.texto))?.texto
+    : rawPreview;
 
   return (
     <button
