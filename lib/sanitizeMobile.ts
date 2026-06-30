@@ -1,9 +1,19 @@
-import type { Mobile } from "./types";
-import { isSinNovedadTexto } from "./status";
+import type { Mobile, Novedad } from "./types";
+import {
+  cleanNovedadTexto,
+  shouldHideFromHistorial,
+} from "./status";
 
-/** Quita del historial entradas sin observación real. */
+function cleanNovedad(n: Novedad): Novedad {
+  return { ...n, texto: cleanNovedadTexto(n.texto) };
+}
+
+/** Quita del historial entradas sin observación real o solo higiene. */
 export function sanitizeMobileHistorial(mobile: Mobile): Mobile {
-  const historial = mobile.historial.filter((n) => !isSinNovedadTexto(n.texto));
+  const historial = mobile.historial
+    .map(cleanNovedad)
+    .filter((n) => !shouldHideFromHistorial(n.texto) && n.texto.trim());
+
   return {
     ...mobile,
     historial,

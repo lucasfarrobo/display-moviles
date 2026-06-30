@@ -119,6 +119,16 @@ export function hasLuzFallida(inspeccion: InspeccionVehiculo): boolean {
   );
 }
 
+export function hasFluidoMedio(inspeccion: InspeccionVehiculo): boolean {
+  const fluids = [
+    inspeccion.combustible,
+    inspeccion.aceite,
+    inspeccion.refrigerante,
+    inspeccion.liquidoFrenos,
+  ];
+  return fluids.some((f) => f.level === "medium");
+}
+
 export function hasFluidoCritico(inspeccion: InspeccionVehiculo): boolean {
   return (
     inspeccion.combustible.critical ||

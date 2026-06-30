@@ -1,7 +1,10 @@
 "use client";
 
 import type { Mobile, Novedad } from "@/lib/types";
-import { isSinNovedadTexto } from "@/lib/status";
+import {
+  isSinNovedadTexto,
+  shouldHideFromHistorial,
+} from "@/lib/status";
 import { STATUS_CONFIG } from "./MobileCard";
 import { InspectionPanel } from "./InspectionPanel";
 
@@ -43,7 +46,9 @@ function HistorialItem({ item, isLatest }: { item: Novedad; isLatest: boolean })
 
 export function DetailPanel({ mobile, onClose }: Props) {
   const cfg = STATUS_CONFIG[mobile.status];
-  const historial = mobile.historial.filter((n) => !isSinNovedadTexto(n.texto));
+  const historial = mobile.historial.filter(
+    (n) => !shouldHideFromHistorial(n.texto) && n.texto.trim()
+  );
 
   return (
     <div className="bg-slate-900 border border-slate-700 rounded-xl p-5 max-h-[85vh] overflow-y-auto">

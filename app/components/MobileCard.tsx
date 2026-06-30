@@ -1,7 +1,7 @@
 "use client";
 
 import type { Mobile, Status } from "@/lib/types";
-import { isSinNovedadTexto } from "@/lib/status";
+import { isSinNovedadTexto, isHigieneOnlyTexto, shouldHideFromHistorial } from "@/lib/status";
 import { hasFluidoCritico, hasLuzFallida } from "@/lib/inspection";
 
 const STATUS_CONFIG: Record<
@@ -43,9 +43,12 @@ interface Props {
 export function MobileCard({ mobile, selected, onClick }: Props) {
   const cfg = STATUS_CONFIG[mobile.status];
   const rawPreview = mobile.ultimaNovedad.texto;
-  const preview = isSinNovedadTexto(rawPreview)
-    ? mobile.historial.find((n) => !isSinNovedadTexto(n.texto))?.texto
-    : rawPreview;
+  const preview =
+    isSinNovedadTexto(rawPreview) || isHigieneOnlyTexto(rawPreview)
+      ? mobile.historial.find(
+          (n) => !shouldHideFromHistorial(n.texto) && n.texto.trim()
+        )?.texto
+      : rawPreview;
 
   const alertaInspeccion =
     mobile.inspeccion &&

@@ -1,4 +1,5 @@
 import type { Status } from "./types";
+import type { InspeccionVehiculo } from "./inspection";
 
 export function mapEstadoToStatus(estadoRaw: string): Status {
   const val = estadoRaw?.toLowerCase().trim() ?? "";
@@ -30,63 +31,39 @@ export function mapEstadoToStatus(estadoRaw: string): Status {
   return "operational";
 }
 
-export function inferStatusFromText(text: string): Status {
-  return mapEstadoToStatus(text);
+const CRITICAL_OBS =
+  /inmoviliz|fuera de servicio|no oper|no circula|gravedad|frenos|motor|rotura|partido|roto|no arranca|taller|desinflado|falta comando|sin auxilio|no tiene auxilio|baja/i;
+
+const STEERING_OBS =
+  /direcci[oó]n|volante|cremallera|espanol|alineaci[oó]n|tren delantero|fuga de direcci/i;
+
+export function hasSteeringIssue(observaciones: string): boolean {
+  return STEERING_OBS.test(observaciones.toLowerCase());
 }
 
-/** Estado según inspección vehicular del formulario real. */
-export function statusFromInspection(input: {
-  observaciones: string;
-  higieneInterior: string;
-  higieneExterior: string;
-}): Status {
-  const obs = input.observaciones?.toLowerCase().trim() ?? "";
-  const hi = input.higieneInterior?.toUpperCase().trim() ?? "";
-  const he = input.higieneExterior?.toUpperCase().trim() ?? "";
-
-  const criticalObs =
-    /inmoviliz|fuera de servicio|no oper|no circula|gravedad|frenos|motor|rotura|partido|roto|no arranca|taller|desinflado|falta comando|sin auxilio|no tiene auxilio|baja/i;
-
-  if (criticalObs.test(obs)) return "outOfService";
-  if (hi === "MALO" || he === "MALO") return "outOfService";
-
-  if (hi === "REGULAR" || he === "REGULAR" || obs.length > 20) {
-    return "attention";
-  }
-
-  if (obs.length > 0) return "attention";
-
-  return "operational";
+export function buildNovedadTexto(observaciones: string): string {
+  const obs = observaciones?.trim();
+  if (obs && !isSinNovedadTexto(obs)) return obs;
+  return "Sin novedades. Inspección conforme.";
 }
 
-export function buildNovedadTexto(input: {
-  observaciones: string;
-  higieneInterior: string;
-  higieneExterior: string;
-}): string {
-  const parts: string[] = [];
-
-  const obs = input.observaciones?.trim();
-  if (obs && !isSinNovedadTexto(obs)) parts.push(obs);
-
-  const hi = input.higieneInterior?.trim();
-  const he = input.higieneExterior?.trim();
-
-  if (hi && hi.toUpperCase() !== "BUENO") {
-    parts.push(`Higiene interior: ${hi}`);
-  }
-  if (he && he.toUpperCase() !== "BUENO") {
-    parts.push(`Higiene exterior: ${he}`);
-  }
-
-  if (parts.length === 0) {
-    return "Sin novedades. Inspección conforme.";
-  }
-
-  return parts.join("\n");
+export function stripHigieneLines(texto: string): string {
+  return texto
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l && !/^higiene\s+(interior|exterior)\s*:/i.test(l))
+    .join("\n")
+    .trim();
 }
 
-/** Entradas vacías o sin observación real (inspección conforme, etc.). */
+export function isHigieneOnlyTexto(texto: string): boolean {
+  const trimmed = texto.trim();
+  if (!trimmed) return false;
+  const withoutHigiene = stripHigieneLines(trimmed);
+  if (withoutHigiene) return false;
+  return /higiene\s+(interior|exterior)/i.test(trimmed);
+}
+
 export function isSinNovedadTexto(texto: string): boolean {
   const t = texto.trim().toLowerCase();
   if (!t) return true;
@@ -94,4 +71,56 @@ export function isSinNovedadTexto(texto: string): boolean {
   if (/^inspecci[oó]n conforme\.?$/i.test(t)) return true;
   if (/^sin novedades?\.\s*inspecci[oó]n conforme\.?$/i.test(t)) return true;
   return false;
+}
+
+export function shouldHideFromHistorial(texto: string): boolean {
+  return isSinNovedadTexto(texto) || isHigieneOnlyTexto(texto);
+}
+
+function statusFromFluids(inspeccion: InspeccionVehiculo): Status | null {
+  const fluids = [
+    inspeccion.combustible,
+    inspeccion.aceite,
+    inspeccion.refrigerante,
+    inspeccion.liquidoFrenos,
+  ];
+
+  if (fluids.some((f) => f.critical || f.level === "low")) {
+    return "outOfService";
+  }
+  if (fluids.some((f) => f.level === "medium")) {
+    return "attention";
+  }
+  return null;
+}
+
+/** Estado del tablero según fluidos, observaciones y reglas de negocio. */
+export function resolveMobileStatus(
+  inspeccion: InspeccionVehiculo | undefined,
+  observaciones: string
+): Status {
+  const obs = stripHigieneLines(observaciones?.trim() ?? "");
+
+  if (inspeccion) {
+    const fluidStatus = statusFromFluids(inspeccion);
+    if (fluidStatus === "outOfService") return "outOfService";
+  }
+
+  if (CRITICAL_OBS.test(obs)) return "outOfService";
+
+  if (hasSteeringIssue(obs)) return "attention";
+
+  if (inspeccion) {
+    const fluidStatus = statusFromFluids(inspeccion);
+    if (fluidStatus === "attention") return "attention";
+  }
+
+  if (obs && !isSinNovedadTexto(obs)) return "attention";
+
+  return "operational";
+}
+
+export function cleanNovedadTexto(texto: string): string {
+  const cleaned = stripHigieneLines(texto);
+  return cleaned || texto;
 }

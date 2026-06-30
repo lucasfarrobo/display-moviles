@@ -2,10 +2,10 @@ import type { Mobile, Novedad } from "./types";
 import { parseMobileField, type ParsedMobile } from "./parseMobile";
 import {
   buildNovedadTexto,
-  inferStatusFromText,
-  isSinNovedadTexto,
+  cleanNovedadTexto,
   mapEstadoToStatus,
-  statusFromInspection,
+  resolveMobileStatus,
+  shouldHideFromHistorial,
 } from "./status";
 import { SHEET_CONFIG, columnIndex } from "./config";
 import { parseInspeccion } from "./inspection";
@@ -106,21 +106,7 @@ function rowToNovedad(
   });
 
   const observaciones = getCell(row.cells, cols.novedad);
-  const higieneInterior = getCell(row.cells, cols.higieneInterior);
-  const higieneExterior = getCell(row.cells, cols.higieneExterior);
   const estadoRaw = getCell(row.cells, cols.estado);
-
-  const novedadText = buildNovedadTexto({
-    observaciones,
-    higieneInterior,
-    higieneExterior,
-  });
-
-  const status = estadoRaw
-    ? mapEstadoToStatus(estadoRaw)
-    : cols.novedad || cols.higieneInterior
-      ? statusFromInspection({ observaciones, higieneInterior, higieneExterior })
-      : inferStatusFromText(novedadText);
 
   const inspeccion = parseInspeccion({
     combustible: getCell(row.cells, cols.combustible),
@@ -131,6 +117,12 @@ function rowToNovedad(
     lucesBajas: getCell(row.cells, cols.lucesBajas),
     lucesBaliza: getCell(row.cells, cols.lucesBaliza),
   });
+
+  const novedadText = buildNovedadTexto(observaciones);
+
+  const status = estadoRaw
+    ? mapEstadoToStatus(estadoRaw)
+    : resolveMobileStatus(inspeccion, observaciones);
 
   const novedad: Novedad = {
     id: `row-${row.rowIndex}`,
@@ -198,13 +190,21 @@ export function buildMobilesFromRows(rows: SheetRow[]): Mobile[] {
     });
 
     const ultima = sorted[0];
-    const historial = sorted.filter((n) => !isSinNovedadTexto(n.texto));
+    const historial = sorted
+      .map((n) => ({ ...n, texto: cleanNovedadTexto(n.texto) }))
+      .filter((n) => !shouldHideFromHistorial(n.texto) && n.texto.trim());
+
+    const mobileStatus = resolveMobileStatus(
+      ultima.inspeccion,
+      ultima.texto
+    );
+
     mobiles.push({
       id: key,
       numero: parsed.numero,
       nombre: parsed.nombre,
       patente: parsed.patente,
-      status: ultima.status,
+      status: mobileStatus,
       ultimaActualizacion: ultima.timestamp,
       ultimaNovedad: ultima,
       historial,
