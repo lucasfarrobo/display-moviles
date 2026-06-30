@@ -48,7 +48,7 @@ export function buildNovedadTexto(observaciones: string): string {
 }
 
 export function stripHigieneLines(texto: string): string {
-  return texto
+  return (texto ?? "")
     .split("\n")
     .map((l) => l.trim())
     .filter((l) => l && !/^higiene\s+(interior|exterior)\s*:/i.test(l))
@@ -57,7 +57,7 @@ export function stripHigieneLines(texto: string): string {
 }
 
 export function isHigieneOnlyTexto(texto: string): boolean {
-  const trimmed = texto.trim();
+  const trimmed = (texto ?? "").trim();
   if (!trimmed) return false;
   const withoutHigiene = stripHigieneLines(trimmed);
   if (withoutHigiene) return false;
@@ -65,7 +65,7 @@ export function isHigieneOnlyTexto(texto: string): boolean {
 }
 
 export function isSinNovedadTexto(texto: string): boolean {
-  const t = texto.trim().toLowerCase();
+  const t = (texto ?? "").trim().toLowerCase();
   if (!t) return true;
   if (/sin\s+novedad/i.test(t)) return true;
   if (/^inspecci[oó]n conforme\.?$/i.test(t)) return true;
@@ -121,6 +121,7 @@ export function resolveMobileStatus(
 }
 
 export function cleanNovedadTexto(texto: string): string {
-  const cleaned = stripHigieneLines(texto);
-  return cleaned || texto;
+  const safe = texto ?? "";
+  const cleaned = stripHigieneLines(safe);
+  return cleaned || safe;
 }

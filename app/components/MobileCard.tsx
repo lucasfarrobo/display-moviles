@@ -41,8 +41,8 @@ interface Props {
 }
 
 export function MobileCard({ mobile, selected, onClick }: Props) {
-  const cfg = STATUS_CONFIG[mobile.status];
-  const rawPreview = mobile.ultimaNovedad.texto;
+  const cfg = STATUS_CONFIG[mobile.status] ?? STATUS_CONFIG.operational;
+  const rawPreview = mobile.ultimaNovedad?.texto ?? "";
   const preview =
     isSinNovedadTexto(rawPreview) || isHigieneOnlyTexto(rawPreview)
       ? mobile.historial.find(

@@ -14,7 +14,7 @@ interface Props {
 }
 
 function HistorialItem({ item, isLatest }: { item: Novedad; isLatest: boolean }) {
-  const cfg = STATUS_CONFIG[item.status];
+  const cfg = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.operational;
 
   return (
     <div
@@ -45,8 +45,8 @@ function HistorialItem({ item, isLatest }: { item: Novedad; isLatest: boolean })
 }
 
 export function DetailPanel({ mobile, onClose }: Props) {
-  const cfg = STATUS_CONFIG[mobile.status];
-  const historial = mobile.historial.filter(
+  const cfg = STATUS_CONFIG[mobile.status] ?? STATUS_CONFIG.operational;
+  const historial = (mobile.historial ?? []).filter(
     (n) => !shouldHideFromHistorial(n.texto) && n.texto.trim()
   );
 
@@ -111,8 +111,8 @@ export function DetailPanel({ mobile, onClose }: Props) {
                 key={item.id}
                 item={item}
                 isLatest={
-                  item.id === mobile.ultimaNovedad.id &&
-                  !isSinNovedadTexto(mobile.ultimaNovedad.texto)
+                  item.id === mobile.ultimaNovedad?.id &&
+                  !isSinNovedadTexto(mobile.ultimaNovedad?.texto ?? "")
                 }
               />
             ))

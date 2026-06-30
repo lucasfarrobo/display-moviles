@@ -1,11 +1,17 @@
 import { mkdirSync, writeFileSync } from "fs";
+import { slimMobilesResponse } from "../lib/exportPayload";
 import { getMobilesFromSheets } from "../lib/sheets";
 
 async function main() {
   const data = await getMobilesFromSheets();
+  const payload = slimMobilesResponse(data);
   mkdirSync("public/data", { recursive: true });
-  writeFileSync("public/data/mobiles.json", JSON.stringify(data, null, 2));
-  console.log(`[fetch-data] ${data.mobiles.length} móviles → public/data/mobiles.json`);
+  const json = JSON.stringify(payload);
+  writeFileSync("public/data/mobiles.json", json);
+  const kb = Math.round(json.length / 1024);
+  console.log(
+    `[fetch-data] ${payload.mobiles.length} móviles → public/data/mobiles.json (${kb} KB)`
+  );
 }
 
 main().catch((err) => {

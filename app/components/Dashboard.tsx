@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import type { Mobile, MobilesResponse, Status } from "@/lib/types";
-import { MOCK_MOBILES } from "@/lib/types";
 import { withBasePath } from "@/lib/basePath";
 import { sanitizeMobiles } from "@/lib/sanitizeMobile";
 import { MobileCard } from "./MobileCard";
@@ -22,25 +21,51 @@ export function Dashboard() {
   const [dataSource, setDataSource] = useState<"sheets" | "mock">("mock");
   const [updatedAt, setUpdatedAt] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
 
   useEffect(() => {
-    fetch(withBasePath("/data/mobiles.json"))
+    let cancelled = false;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 45000);
+
+    fetch(withBasePath("/data/mobiles.json"), { signal: controller.signal })
       .then((res) => {
-        if (!res.ok) throw new Error("No se pudo cargar datos");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json() as Promise<MobilesResponse>;
       })
       .then((data) => {
+        if (cancelled) return;
+        if (!Array.isArray(data.mobiles)) {
+          throw new Error("Formato de datos inválido");
+        }
         setMobiles(sanitizeMobiles(data.mobiles));
         setDataSource(data.source);
         setUpdatedAt(data.updatedAt);
+        setError(null);
       })
-      .catch(() => {
-        setMobiles(MOCK_MOBILES);
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("[Dashboard] Error cargando datos:", err);
+        setError(
+          err instanceof DOMException && err.name === "AbortError"
+            ? "La carga tardó demasiado. Refrescá la página (Ctrl+F5)."
+            : "No se pudieron cargar los datos del Sheet. Refrescá la página."
+        );
+        setMobiles([]);
         setDataSource("mock");
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+        clearTimeout(timeout);
+      });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+      clearTimeout(timeout);
+    };
   }, []);
 
   const counts = {
@@ -56,8 +81,23 @@ export function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-400 flex items-center justify-center">
-        Cargando móviles…
+      <div className="min-h-screen bg-slate-950 text-slate-400 flex flex-col items-center justify-center gap-3">
+        <div className="w-8 h-8 border-2 border-slate-600 border-t-amber-400 rounded-full animate-spin" />
+        <p>Cargando móviles…</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-300 flex flex-col items-center justify-center gap-4 p-6 text-center">
+        <p className="text-red-400 font-medium">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium"
+        >
+          Reintentar
+        </button>
       </div>
     );
   }
