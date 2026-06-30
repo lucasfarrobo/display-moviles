@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-rojo: #ef4444;
+  --color-amarillo: #f59e0b;
+  --color-verde: #22c55e;
+}
+
+body {
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
