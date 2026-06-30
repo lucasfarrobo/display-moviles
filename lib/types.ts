@@ -1,3 +1,5 @@
+import type { InspeccionVehiculo } from "./inspection";
+
 export type Status = "operational" | "attention" | "outOfService";
 
 /** Una fila del formulario = una novedad reportada. */
@@ -8,6 +10,7 @@ export interface Novedad {
   status: Status;
   texto: string;
   reportadoPor?: string;
+  inspeccion?: InspeccionVehiculo;
 }
 
 /** Móvil agregado: estado actual + historial completo de novedades. */
@@ -21,6 +24,7 @@ export interface Mobile {
   ultimaNovedad: Novedad;
   historial: Novedad[];
   totalNovedades: number;
+  inspeccion?: InspeccionVehiculo;
 }
 
 export interface MobilesResponse {

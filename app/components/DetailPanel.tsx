@@ -3,6 +3,7 @@
 import type { Mobile, Novedad } from "@/lib/types";
 import { isSinNovedadTexto } from "@/lib/status";
 import { STATUS_CONFIG } from "./MobileCard";
+import { InspectionPanel } from "./InspectionPanel";
 
 interface Props {
   mobile: Mobile;
@@ -82,6 +83,13 @@ export function DetailPanel({ mobile, onClose }: Props) {
       </div>
 
       <hr className="border-slate-700 mb-4" />
+
+      {mobile.inspeccion && (
+        <>
+          <InspectionPanel inspeccion={mobile.inspeccion} />
+          <hr className="border-slate-700 mb-4" />
+        </>
+      )}
 
       <div>
         <h3 className="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-3">

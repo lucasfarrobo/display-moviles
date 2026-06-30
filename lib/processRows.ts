@@ -8,6 +8,7 @@ import {
   statusFromInspection,
 } from "./status";
 import { SHEET_CONFIG, columnIndex } from "./config";
+import { parseInspeccion } from "./inspection";
 import { resolveRowTimestamp } from "./timestamp";
 
 export interface SheetRow {
@@ -63,6 +64,27 @@ function resolveColumns(headers: string[]) {
     reportadoPor:
       cfg.columnReportadoPor ||
       detectColumnByHeader(headers, ["chofer", "conductor", "reportado"]),
+    combustible:
+      cfg.columnCombustible ||
+      detectColumnByHeader(headers, ["combustible"]),
+    lucesAltas:
+      cfg.columnLucesAltas ||
+      detectColumnByHeader(headers, ["altas"]),
+    lucesBajas:
+      cfg.columnLucesBajas ||
+      detectColumnByHeader(headers, ["bajas"]),
+    lucesBaliza:
+      cfg.columnLucesBaliza ||
+      detectColumnByHeader(headers, ["baliza"]),
+    aceite:
+      cfg.columnAceite ||
+      detectColumnByHeader(headers, ["aceite"]),
+    refrigerante:
+      cfg.columnRefrigerante ||
+      detectColumnByHeader(headers, ["refrigerante"]),
+    liquidoFrenos:
+      cfg.columnLiquidoFrenos ||
+      detectColumnByHeader(headers, ["frenos"]),
   };
 }
 
@@ -100,6 +122,16 @@ function rowToNovedad(
       ? statusFromInspection({ observaciones, higieneInterior, higieneExterior })
       : inferStatusFromText(novedadText);
 
+  const inspeccion = parseInspeccion({
+    combustible: getCell(row.cells, cols.combustible),
+    aceite: getCell(row.cells, cols.aceite),
+    refrigerante: getCell(row.cells, cols.refrigerante),
+    liquidoFrenos: getCell(row.cells, cols.liquidoFrenos),
+    lucesAltas: getCell(row.cells, cols.lucesAltas),
+    lucesBajas: getCell(row.cells, cols.lucesBajas),
+    lucesBaliza: getCell(row.cells, cols.lucesBaliza),
+  });
+
   const novedad: Novedad = {
     id: `row-${row.rowIndex}`,
     timestamp,
@@ -107,6 +139,7 @@ function rowToNovedad(
     status,
     texto: novedadText,
     reportadoPor: getCell(row.cells, cols.reportadoPor) || undefined,
+    inspeccion,
   };
 
   return { parsed, novedad };
@@ -176,6 +209,7 @@ export function buildMobilesFromRows(rows: SheetRow[]): Mobile[] {
       ultimaNovedad: ultima,
       historial,
       totalNovedades: historial.length,
+      inspeccion: ultima.inspeccion,
     });
   }
 

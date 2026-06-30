@@ -143,7 +143,7 @@ export function Dashboard() {
         </div>
 
         {selectedMobile && (
-          <div className="w-full lg:w-96 flex-shrink-0 sticky top-6">
+          <div className="w-full lg:w-[28rem] flex-shrink-0 sticky top-6">
             <DetailPanel
               mobile={selectedMobile}
               onClose={() => setSelectedId(null)}

@@ -2,6 +2,7 @@
 
 import type { Mobile, Status } from "@/lib/types";
 import { isSinNovedadTexto } from "@/lib/status";
+import { hasFluidoCritico, hasLuzFallida } from "@/lib/inspection";
 
 const STATUS_CONFIG: Record<
   Status,
@@ -46,6 +47,10 @@ export function MobileCard({ mobile, selected, onClick }: Props) {
     ? mobile.historial.find((n) => !isSinNovedadTexto(n.texto))?.texto
     : rawPreview;
 
+  const alertaInspeccion =
+    mobile.inspeccion &&
+    (hasFluidoCritico(mobile.inspeccion) || hasLuzFallida(mobile.inspeccion));
+
   return (
     <button
       onClick={onClick}
@@ -62,6 +67,11 @@ export function MobileCard({ mobile, selected, onClick }: Props) {
             {mobile.numero}
           </span>
         </div>
+        {alertaInspeccion && (
+          <span className="text-amber-400 text-xs flex-shrink-0" title="Revisar inspección">
+            ⚠
+          </span>
+        )}
         {mobile.totalNovedades > 1 && (
           <span className="text-slate-400 text-xs flex-shrink-0">
             {mobile.totalNovedades} novedades
