@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "npm run fetch-data && next dev",
+    "fetch-data": "tsx scripts/fetch-data.ts",
     "build": "next build",
-    "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
@@ -23,6 +23,7 @@
     "eslint-config-next": "14.2.29",
     "tailwindcss": "^3.4.1",
     "postcss": "^8",
-    "autoprefixer": "^10.0.1"
+    "autoprefixer": "^10.0.1",
+    "tsx": "^4.19.4"
   }
 }

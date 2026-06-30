@@ -1,14 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import type { Mobile, Status } from "@/lib/types";
+import { useEffect, useState } from "react";
+import type { Mobile, MobilesResponse, Status } from "@/lib/types";
+import { MOCK_MOBILES } from "@/lib/types";
+import { withBasePath } from "@/lib/basePath";
 import { MobileCard } from "./MobileCard";
 import { DetailPanel } from "./DetailPanel";
-
-interface Props {
-  initialMobiles: Mobile[];
-  dataSource?: "sheets" | "mock";
-}
 
 type Filter = Status | "all";
 
@@ -19,10 +16,31 @@ const FILTER_OPTIONS: { value: Filter; label: string }[] = [
   { value: "outOfService", label: "Fuera de servicio" },
 ];
 
-export function Dashboard({ initialMobiles, dataSource = "mock" }: Props) {
-  const [mobiles] = useState<Mobile[]>(initialMobiles);
+export function Dashboard() {
+  const [mobiles, setMobiles] = useState<Mobile[]>([]);
+  const [dataSource, setDataSource] = useState<"sheets" | "mock">("mock");
+  const [updatedAt, setUpdatedAt] = useState<string>("");
+  const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
+
+  useEffect(() => {
+    fetch(withBasePath("/data/mobiles.json"))
+      .then((res) => {
+        if (!res.ok) throw new Error("No se pudo cargar datos");
+        return res.json() as Promise<MobilesResponse>;
+      })
+      .then((data) => {
+        setMobiles(data.mobiles);
+        setDataSource(data.source);
+        setUpdatedAt(data.updatedAt);
+      })
+      .catch(() => {
+        setMobiles(MOCK_MOBILES);
+        setDataSource("mock");
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const counts = {
     operational: mobiles.filter((m) => m.status === "operational").length,
@@ -34,6 +52,14 @@ export function Dashboard({ initialMobiles, dataSource = "mock" }: Props) {
     filter === "all" ? mobiles : mobiles.filter((m) => m.status === filter);
 
   const selectedMobile = mobiles.find((m) => m.id === selectedId) ?? null;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-400 flex items-center justify-center">
+        Cargando móviles…
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6">
@@ -48,9 +74,14 @@ export function Dashboard({ initialMobiles, dataSource = "mock" }: Props) {
           <span className="text-slate-500 text-xs block">
             {mobiles.length} unidades
           </span>
-          <span className="text-slate-600 text-[10px]">
-            {dataSource === "sheets" ? "Datos en vivo" : "Datos de prueba"}
+          <span className="text-slate-600 text-[10px] block">
+            {dataSource === "sheets" ? "Datos del Sheet" : "Datos de prueba"}
           </span>
+          {updatedAt && (
+            <span className="text-slate-600 text-[10px] block">
+              Actualizado: {new Date(updatedAt).toLocaleString("es-AR")}
+            </span>
+          )}
         </div>
       </div>
 

@@ -7,6 +7,7 @@ import {
   type SheetRow,
 } from "./processRows";
 import { SHEET_CONFIG } from "./config";
+import { parseCsv } from "./csv";
 
 function toSheetRows(values: string[][]): SheetRow[] {
   return values.map((cells, idx) => ({
@@ -19,60 +20,12 @@ async function fetchPublicCsv(sheetId: string): Promise<string[][]> {
   const gid = SHEET_CONFIG.sheetGid;
   const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
 
-  const res = await fetch(url, { next: { revalidate: 60 } });
+  const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Export CSV falló (${res.status})`);
   }
 
-  const csv = await res.text();
-  return parseCsv(csv);
-}
-
-/** Parser CSV con soporte de campos multilínea entre comillas. */
-function parseCsv(text: string): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let cell = "";
-  let inQuotes = false;
-
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    const next = text[i + 1];
-
-    if (inQuotes) {
-      if (ch === '"' && next === '"') {
-        cell += '"';
-        i++;
-      } else if (ch === '"') {
-        inQuotes = false;
-      } else {
-        cell += ch;
-      }
-      continue;
-    }
-
-    if (ch === '"') {
-      inQuotes = true;
-    } else if (ch === ",") {
-      row.push(cell);
-      cell = "";
-    } else if (ch === "\n" || (ch === "\r" && next === "\n")) {
-      row.push(cell);
-      if (row.some((c) => c.trim())) rows.push(row);
-      row = [];
-      cell = "";
-      if (ch === "\r") i++;
-    } else if (ch !== "\r") {
-      cell += ch;
-    }
-  }
-
-  if (cell.length > 0 || row.length > 0) {
-    row.push(cell);
-    if (row.some((c) => c.trim())) rows.push(row);
-  }
-
-  return rows;
+  return parseCsv(await res.text());
 }
 
 async function fetchViaServiceAccount(sheetId: string): Promise<string[][]> {
@@ -116,16 +69,12 @@ export async function getMobilesFromSheets(): Promise<MobilesResponse> {
   }
 
   try {
-    let values: string[][];
+    const values =
+      hasServiceAccount && !usePublic
+        ? await fetchViaServiceAccount(sheetId)
+        : await fetchPublicCsv(sheetId);
 
-    if (hasServiceAccount && !usePublic) {
-      values = await fetchViaServiceAccount(sheetId);
-    } else {
-      values = await fetchPublicCsv(sheetId);
-    }
-
-    const rows = toSheetRows(values);
-    const mobiles = buildMobilesFromRows(rows);
+    const mobiles = buildMobilesFromRows(toSheetRows(values));
 
     if (mobiles.length === 0) {
       console.warn("[sheets] Sin móviles parseados → mock");

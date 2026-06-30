@@ -17,34 +17,9 @@ Cada fila del formulario = una **novedad**.
 | Historial | Todas las inspecciones del mismo móvil, de más nueva a más antigua |
 | Color | Inferido de higiene + observaciones (MALO→rojo, REGULAR→amarillo, BUENO→verde) |
 
-## API
+## Datos estáticos
 
-```
-GET /api/moviles          → listado con estado actual + historial por unidad
-GET /api/moviles/:id      → detalle de un móvil
-```
-
-Ejemplo de respuesta (`/api/moviles`):
-
-```json
-{
-  "mobiles": [
-    {
-      "id": "m-003",
-      "numero": "M-003",
-      "nombre": "Ambulancia Norte",
-      "patente": "GHI 789",
-      "status": "outOfService",
-      "ultimaActualizacion": "28/06/2026 17:45",
-      "totalNovedades": 2,
-      "ultimaNovedad": { "texto": "...", "status": "outOfService", "timestamp": "..." },
-      "historial": [ /* todas las novedades */ ]
-    }
-  ],
-  "updatedAt": "2026-06-30T...",
-  "source": "sheets"
-}
-```
+En GitHub Pages los datos se generan en build time y se sirven desde `/data/mobiles.json`. El workflow actualiza el Sheet **cada hora** y en cada push a `main`.
 
 ## Configuración local
 
@@ -96,47 +71,42 @@ Por defecto se detectan automáticamente desde los encabezados. Si hace falta, c
 | `SHEET_COL_NOVEDAD` | 22 | Observaciones generales |
 | `SHEET_COL_HIGIENE_EXT` | 23 | Higiene exterior |
 
-## Publicar en GitHub + web (Vercel)
+## GitHub Pages
 
-### 1. Subir a GitHub
+El sitio se publica automáticamente con GitHub Actions en cada push a `main` (y cada hora para refrescar datos del Sheet).
+
+**URL:** https://lucasfarrobo.github.io/display-moviles/
+
+### Activar Pages (solo la primera vez)
+
+1. Repo → **Settings** → **Pages**
+2. **Source:** GitHub Actions
+
+El workflow `.github/workflows/deploy-pages.yml` hace el resto.
+
+### Build local (preview estático)
 
 ```bash
-cd display-moviles
-git init
-git add .
-git commit -m "Display de móviles: API + dashboard desde Google Sheets"
+npm install
+npm run fetch-data
+$env:GITHUB_PAGES="true"
+$env:NEXT_PUBLIC_BASE_PATH="/display-moviles"
+npm run build
+# Servir carpeta out/ con cualquier server estático
 ```
-
-En GitHub: **New repository** → `display-moviles` → sin README.
-
-```bash
-git remote add origin https://github.com/TU_USUARIO/display-moviles.git
-git branch -M main
-git push -u origin main
-```
-
-### 2. Desplegar como web en Vercel
-
-1. [vercel.com](https://vercel.com) → **Add New Project** → importar el repo de GitHub
-2. Framework: **Next.js** (auto-detectado)
-3. **Environment Variables**:
-   - `GOOGLE_SHEETS_ID`
-   - `GOOGLE_SHEETS_PUBLIC=true` (o `GOOGLE_SERVICE_ACCOUNT` si es privado)
-   - Ajustar columnas si hace falta
-4. **Deploy**
-
-Tu app quedará en `https://display-moviles.vercel.app` (o el dominio que elijas). La API estará en la misma URL: `/api/moviles`.
 
 ## Estructura
 
 ```
 app/
-  api/moviles/route.ts       # GET listado
-  api/moviles/[id]/route.ts  # GET detalle
   components/                # Dashboard, tarjetas, historial
 lib/
   parseMobile.ts             # Parsea columna 6
   processRows.ts             # Agrupa + historial + última novedad
   sheets.ts                  # Lectura Google Sheets / CSV público
   status.ts                  # Mapeo verde/amarillo/rojo
+scripts/
+  fetch-data.ts              # Genera public/data/mobiles.json
+.github/workflows/
+  deploy-pages.yml           # Deploy automático a GitHub Pages
 ```
