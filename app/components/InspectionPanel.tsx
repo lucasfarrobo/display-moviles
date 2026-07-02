@@ -1,7 +1,7 @@
 "use client";
 
 import type { FluidReading, InspeccionVehiculo, LuzEstado } from "@/lib/inspection";
-import { hasLucesAltasFallidas } from "@/lib/inspection";
+import { hasLuzFallida } from "@/lib/inspection";
 import { fluidGaugeColor } from "@/lib/fluidBands";
 import { isAttentionFromInspection, isOutOfServiceFromInspection } from "@/lib/status";
 
@@ -79,7 +79,7 @@ function LuzItem({
         <div>
           <span className="text-amber-300 text-xs font-semibold block">{label}</span>
           <span className="text-amber-400/80 text-[10px]">
-            A revisar — luces altas quemadas (móvil operativo)
+            A revisar — no funciona
           </span>
         </div>
       </div>
@@ -109,10 +109,10 @@ interface Props {
 }
 
 export function InspectionPanel({ inspeccion }: Props) {
-  const alertaCritica =
-    isOutOfServiceFromInspection(inspeccion) ||
-    isAttentionFromInspection(inspeccion);
-  const lucesAltasFallidas = hasLucesAltasFallidas(inspeccion);
+  const alertaCritica = isOutOfServiceFromInspection(inspeccion);
+  const alertaAtencion =
+    !alertaCritica && isAttentionFromInspection(inspeccion);
+  const lucesFallidas = hasLuzFallida(inspeccion);
 
   return (
     <div className="mb-4">
@@ -120,12 +120,12 @@ export function InspectionPanel({ inspeccion }: Props) {
         Inspección actual
         {alertaCritica && (
           <span className="ml-2 text-red-400 normal-case font-normal">
-            · requiere atención
+            · fuera de servicio
           </span>
         )}
-        {!alertaCritica && lucesAltasFallidas && (
+        {alertaAtencion && (
           <span className="ml-2 text-amber-400 normal-case font-normal">
-            · luces altas a revisar
+            · {lucesFallidas ? "luces a revisar" : "a tener en cuenta"}
           </span>
         )}
       </h3>
@@ -143,8 +143,8 @@ export function InspectionPanel({ inspeccion }: Props) {
         </p>
         <div className="grid grid-cols-1 gap-1.5">
           <LuzItem label="Luces altas" luz={inspeccion.luces.altas} reviewOnly />
-          <LuzItem label="Luces bajas" luz={inspeccion.luces.bajas} />
-          <LuzItem label="Baliza aérea" luz={inspeccion.luces.baliza} />
+          <LuzItem label="Luces bajas" luz={inspeccion.luces.bajas} reviewOnly />
+          <LuzItem label="Baliza aérea" luz={inspeccion.luces.baliza} reviewOnly />
         </div>
       </div>
     </div>

@@ -12,6 +12,7 @@ import { SHEET_CONFIG, columnIndex } from "./config";
 import { parseInspeccion } from "./inspection";
 import { applyObsFluidOverrides } from "./obsFluids";
 import { isForcedOutOfService } from "./forcedOutOfService";
+import { isForcedOperational } from "./operationalOverrides";
 import { resolveRowTimestamp } from "./timestamp";
 
 export interface SheetRow {
@@ -204,6 +205,8 @@ export function buildMobilesFromRows(rows: SheetRow[]): Mobile[] {
     let mobileStatus = resolveMobileBoardStatus(sorted);
     if (isForcedOutOfService(parsed.patente)) {
       mobileStatus = "outOfService";
+    } else if (isForcedOperational(parsed.numero)) {
+      mobileStatus = "operational";
     }
 
     const ultimaObs = ultima.texto;

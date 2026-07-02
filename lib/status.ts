@@ -36,8 +36,8 @@ export function mapEstadoToStatus(estadoRaw: string): Status {
   return "operational";
 }
 
-/** Estado del tablero: historial completo (rojo) + última inspección. */
-export function isOutOfServiceObs(observaciones: string): boolean {
+/** Fallas graves que mantienen rojo aunque aparezcan solo en el historial. */
+export function isPermanentOutOfServiceObs(observaciones: string): boolean {
   const obs = observaciones.toLowerCase();
 
   if (/no\s+arranca/i.test(obs)) return true;
@@ -50,6 +50,16 @@ export function isOutOfServiceObs(observaciones: string): boolean {
     return true;
   }
   if (/siniestr/i.test(obs)) return true;
+
+  return false;
+}
+
+/** Observaciones críticas en la última novedad. */
+export function isOutOfServiceObs(observaciones: string): boolean {
+  if (isPermanentOutOfServiceObs(observaciones)) return true;
+
+  const obs = observaciones.toLowerCase();
+
   if (
     /sin\s+bater[ií]a|sin\s+batear[ií]a|no\s+tiene\s+bater[ií]a|bater[ií]a\s+(?:sin|faltante|descargada)/i.test(
       obs
@@ -68,12 +78,11 @@ export function isOutOfServiceObs(observaciones: string): boolean {
   return false;
 }
 
-/** Luces bajas fallidas o fluidos < 1/4 (0–24 %) → fuera de servicio. */
+/** Fluidos < 1/4 (0–24 %) → fuera de servicio. Luces → atención (ver isAttentionFromInspection). */
 export function isOutOfServiceFromInspection(
   inspeccion: InspeccionVehiculo | undefined
 ): boolean {
   if (!inspeccion) return false;
-  if (!inspeccion.luces.bajas.ok) return true;
 
   const fluids = [
     inspeccion.combustible,
@@ -110,11 +119,15 @@ function statusFromMotorFluids(inspeccion: InspeccionVehiculo): Status | null {
   return null;
 }
 
-/** Luces altas fallidas no cambian el color del tablero (solo alerta visual). */
+/** Luces fallidas o fluidos 25–49 % → a tener en cuenta. */
 export function isAttentionFromInspection(
   inspeccion: InspeccionVehiculo | undefined
 ): boolean {
   if (!inspeccion) return false;
+
+  const luces = inspeccion.luces;
+  if (!luces.altas.ok || !luces.bajas.ok || !luces.baliza.ok) return true;
+
   return statusFromMotorFluids(inspeccion) === "attention";
 }
 
@@ -180,7 +193,7 @@ export function resolveMobileBoardStatus(
 
   for (const n of novedades) {
     const obs = stripHigieneLines(n.texto?.trim() ?? "");
-    if (isOutOfServiceObs(obs)) return "outOfService";
+    if (isPermanentOutOfServiceObs(obs)) return "outOfService";
   }
 
   const ultima = novedades[0];
