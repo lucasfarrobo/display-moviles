@@ -107,11 +107,11 @@ function statusFromMotorFluids(inspeccion: InspeccionVehiculo): Status | null {
   return null;
 }
 
+/** Luces altas fallidas no cambian el color del tablero (solo alerta visual). */
 export function isAttentionFromInspection(
   inspeccion: InspeccionVehiculo | undefined
 ): boolean {
   if (!inspeccion) return false;
-  if (!inspeccion.luces.altas.ok) return true;
   return statusFromMotorFluids(inspeccion) === "attention";
 }
 

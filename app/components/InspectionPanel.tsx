@@ -1,6 +1,7 @@
 "use client";
 
 import type { FluidReading, InspeccionVehiculo, LuzEstado } from "@/lib/inspection";
+import { hasLucesAltasFallidas } from "@/lib/inspection";
 import { isAttentionFromInspection, isOutOfServiceFromInspection } from "@/lib/status";
 
 function fluidColor(reading: FluidReading, motorFluid = false): string {
@@ -58,12 +59,41 @@ function FluidGauge({
   );
 }
 
-function LuzItem({ label, luz }: { label: string; luz: LuzEstado }) {
+function LuzItem({
+  label,
+  luz,
+  reviewOnly = false,
+}: {
+  label: string;
+  luz: LuzEstado;
+  reviewOnly?: boolean;
+}) {
   if (luz.ok) {
     return (
       <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700">
         <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" />
         <span className="text-slate-300 text-xs">{label}</span>
+      </div>
+    );
+  }
+
+  if (reviewOnly) {
+    return (
+      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-amber-950/40 border border-amber-800/60">
+        <svg
+          viewBox="0 0 24 24"
+          className="w-4 h-4 text-amber-400 flex-shrink-0"
+          fill="currentColor"
+          aria-hidden
+        >
+          <path d="M12 2L1 21h22L12 2zm0 4.5l7.1 12.5H4.9L12 6.5zM11 10v5h2v-5h-2zm0 6v2h2v-2h-2z" />
+        </svg>
+        <div>
+          <span className="text-amber-300 text-xs font-semibold block">{label}</span>
+          <span className="text-amber-400/80 text-[10px]">
+            A revisar — luces altas quemadas (móvil operativo)
+          </span>
+        </div>
       </div>
     );
   }
@@ -91,17 +121,23 @@ interface Props {
 }
 
 export function InspectionPanel({ inspeccion }: Props) {
-  const alerta =
+  const alertaCritica =
     isOutOfServiceFromInspection(inspeccion) ||
     isAttentionFromInspection(inspeccion);
+  const lucesAltasFallidas = hasLucesAltasFallidas(inspeccion);
 
   return (
     <div className="mb-4">
       <h3 className="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-3">
         Inspección actual
-        {alerta && (
+        {alertaCritica && (
           <span className="ml-2 text-red-400 normal-case font-normal">
             · requiere atención
+          </span>
+        )}
+        {!alertaCritica && lucesAltasFallidas && (
+          <span className="ml-2 text-amber-400 normal-case font-normal">
+            · luces altas a revisar
           </span>
         )}
       </h3>
@@ -118,7 +154,7 @@ export function InspectionPanel({ inspeccion }: Props) {
           Luces
         </p>
         <div className="grid grid-cols-1 gap-1.5">
-          <LuzItem label="Luces altas" luz={inspeccion.luces.altas} />
+          <LuzItem label="Luces altas" luz={inspeccion.luces.altas} reviewOnly />
           <LuzItem label="Luces bajas" luz={inspeccion.luces.bajas} />
           <LuzItem label="Baliza aérea" luz={inspeccion.luces.baliza} />
         </div>

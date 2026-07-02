@@ -117,12 +117,16 @@ export function parseInspeccion(cells: InspectionCells): InspeccionVehiculo {
   };
 }
 
+export function hasLucesAltasFallidas(inspeccion: InspeccionVehiculo): boolean {
+  return !inspeccion.luces.altas.ok;
+}
+
+export function hasLuzCriticaFallida(inspeccion: InspeccionVehiculo): boolean {
+  return !inspeccion.luces.bajas.ok || !inspeccion.luces.baliza.ok;
+}
+
 export function hasLuzFallida(inspeccion: InspeccionVehiculo): boolean {
-  return (
-    !inspeccion.luces.altas.ok ||
-    !inspeccion.luces.bajas.ok ||
-    !inspeccion.luces.baliza.ok
-  );
+  return hasLucesAltasFallidas(inspeccion) || hasLuzCriticaFallida(inspeccion);
 }
 
 export function hasFluidoMedio(inspeccion: InspeccionVehiculo): boolean {
