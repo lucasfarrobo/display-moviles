@@ -90,5 +90,12 @@ export function applyObsFluidOverrides(
     };
   }
 
+  if (/luces?\s+altas?\s+(?:quemadas?|sin\s+funcionar|no\s+funciona)/i.test(obs)) {
+    next.luces = {
+      ...next.luces,
+      altas: { ok: false, raw: "NO (obs.)" },
+    };
+  }
+
   return next;
 }

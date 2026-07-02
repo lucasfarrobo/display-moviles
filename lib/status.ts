@@ -111,6 +111,7 @@ export function isAttentionFromInspection(
   inspeccion: InspeccionVehiculo | undefined
 ): boolean {
   if (!inspeccion) return false;
+  if (!inspeccion.luces.altas.ok) return true;
   return statusFromMotorFluids(inspeccion) === "attention";
 }
 
@@ -160,9 +161,7 @@ export function resolveMobileStatus(
 
   if (isOutOfServiceObs(obs)) return "outOfService";
   if (isOutOfServiceFromInspection(merged)) return "outOfService";
-
-  const fluidStatus = merged ? statusFromMotorFluids(merged) : null;
-  if (fluidStatus === "attention") return "attention";
+  if (merged && isAttentionFromInspection(merged)) return "attention";
 
   return "operational";
 }
