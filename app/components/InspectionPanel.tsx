@@ -98,7 +98,7 @@ export function InspectionPanel({ inspeccion }: Props) {
 
       <div className="space-y-2">
         <p className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">
-          Luces (J · K · L)
+          Luces
         </p>
         <div className="grid grid-cols-1 gap-1.5">
           <LuzItem label="Luces altas" luz={inspeccion.luces.altas} />

@@ -64,6 +64,9 @@ function resolveColumns(headers: string[]) {
     reportadoPor:
       cfg.columnReportadoPor ||
       detectColumnByHeader(headers, ["chofer", "conductor", "reportado"]),
+    jefeDeCoche:
+      cfg.columnJefeDeCoche ||
+      detectColumnByHeader(headers, ["jefe de coche", "jefe"]),
     combustible:
       cfg.columnCombustible ||
       detectColumnByHeader(headers, ["combustible"]),
@@ -130,6 +133,7 @@ function rowToNovedad(
     timestampMs,
     status,
     texto: novedadText,
+    jefeDeCoche: getCell(row.cells, cols.jefeDeCoche) || undefined,
     reportadoPor: getCell(row.cells, cols.reportadoPor) || undefined,
     inspeccion,
   };
@@ -210,6 +214,8 @@ export function buildMobilesFromRows(rows: SheetRow[]): Mobile[] {
       historial,
       totalNovedades: historial.length,
       inspeccion: ultima.inspeccion,
+      jefeDeCoche: ultima.jefeDeCoche,
+      chofer: ultima.reportadoPor,
     });
   }
 

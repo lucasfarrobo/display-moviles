@@ -3,6 +3,7 @@
 import type { Mobile, Status } from "@/lib/types";
 import { isSinNovedadTexto, isHigieneOnlyTexto, shouldHideFromHistorial } from "@/lib/status";
 import { hasFluidoCritico, hasLuzFallida } from "@/lib/inspection";
+import { DuplaInfo } from "./DuplaInfo";
 
 const STATUS_CONFIG: Record<
   Status,
@@ -90,6 +91,12 @@ export function MobileCard({ mobile, selected, onClick }: Props) {
       {mobile.patente && (
         <div className="text-slate-400 text-xs mt-0.5">{mobile.patente}</div>
       )}
+
+      <DuplaInfo
+        jefeDeCoche={mobile.jefeDeCoche}
+        chofer={mobile.chofer}
+        compact
+      />
 
       {preview && (
         <div className={`mt-2 px-2 py-1 rounded text-xs bg-black/30 line-clamp-2 ${cfg.text}`}>

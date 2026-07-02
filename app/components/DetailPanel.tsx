@@ -7,6 +7,7 @@ import {
 } from "@/lib/status";
 import { STATUS_CONFIG } from "./MobileCard";
 import { InspectionPanel } from "./InspectionPanel";
+import { DuplaInfo } from "./DuplaInfo";
 
 interface Props {
   mobile: Mobile;
@@ -36,8 +37,11 @@ function HistorialItem({ item, isLatest }: { item: Novedad; isLatest: boolean })
       <p className="text-slate-300 text-sm leading-relaxed">{item.texto}</p>
       <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5">
         <span className="text-slate-500 text-xs">{item.timestamp}</span>
+        {item.jefeDeCoche && (
+          <span className="text-slate-500 text-xs">· Jefe: {item.jefeDeCoche}</span>
+        )}
         {item.reportadoPor && (
-          <span className="text-slate-500 text-xs">· {item.reportadoPor}</span>
+          <span className="text-slate-500 text-xs">· Chofer: {item.reportadoPor}</span>
         )}
       </div>
     </div>
@@ -88,6 +92,8 @@ export function DetailPanel({ mobile, onClose }: Props) {
       </div>
 
       <hr className="border-slate-700 mb-4" />
+
+      <DuplaInfo jefeDeCoche={mobile.jefeDeCoche} chofer={mobile.chofer} />
 
       {mobile.inspeccion && (
         <>

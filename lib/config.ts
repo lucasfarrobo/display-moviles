@@ -16,6 +16,7 @@ export const SHEET_CONFIG = {
   /** Campo del formulario "Columna 6" → columna G (7) del sheet */
   columnMobile: Number(process.env.SHEET_COL_MOBILE ?? 7),
   columnReportadoPor: Number(process.env.SHEET_COL_REPORTADO_POR ?? 4),
+  columnJefeDeCoche: Number(process.env.SHEET_COL_JEFE_COCHE ?? 3),
   columnNovedad: Number(process.env.SHEET_COL_NOVEDAD ?? 22),
   columnHigieneInterior: Number(process.env.SHEET_COL_HIGIENE_INT ?? 21),
   columnHigieneExterior: Number(process.env.SHEET_COL_HIGIENE_EXT ?? 23),

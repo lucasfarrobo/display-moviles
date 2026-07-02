@@ -9,6 +9,7 @@ export interface Novedad {
   timestampMs: number;
   status: Status;
   texto: string;
+  jefeDeCoche?: string;
   reportadoPor?: string;
   inspeccion?: InspeccionVehiculo;
 }
@@ -25,6 +26,8 @@ export interface Mobile {
   historial: Novedad[];
   totalNovedades: number;
   inspeccion?: InspeccionVehiculo;
+  jefeDeCoche?: string;
+  chofer?: string;
 }
 
 export interface MobilesResponse {
