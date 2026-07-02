@@ -66,7 +66,7 @@ export function parseCombustible(raw: string): FluidReading {
     return { raw, percent: 50, level: "medium", critical: false };
   }
   if (val.includes("1/4") || val.includes("RESERVA")) {
-    return { raw, percent: 20, level: "low", critical: true };
+    return { raw, percent: 25, level: "low", critical: false };
   }
 
   return { raw, percent: 0, level: "unknown", critical: false };
@@ -83,7 +83,7 @@ export function parseFluidLevel(raw: string): FluidReading {
     return { raw, percent: 50, level: "medium", critical: false };
   }
   if (val.includes("1/4") || val.includes("RESERVA")) {
-    return { raw, percent: 20, level: "low", critical: true };
+    return { raw, percent: 25, level: "low", critical: false };
   }
   if (val.includes("MUY BAJO")) {
     return { raw, percent: 10, level: "low", critical: true };

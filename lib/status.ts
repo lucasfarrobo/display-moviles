@@ -2,9 +2,8 @@ import type { Status } from "./types";
 import type { FluidReading, InspeccionVehiculo } from "./inspection";
 import { applyObsFluidOverrides } from "./obsFluids";
 import {
-  combustibleStatusFromPercent,
+  fluidStatusFromPercent,
   isFluidOutOfServicePercent,
-  motorFluidStatusFromPercent,
 } from "./fluidBands";
 
 export function mapEstadoToStatus(estadoRaw: string): Status {
@@ -79,35 +78,32 @@ export function isOutOfServiceObs(observaciones: string): boolean {
   return false;
 }
 
-/** Aceite, refrigerante o frenos < 1/4 (0–24 %) → fuera de servicio. Combustible → atención. */
+/** Cualquier fluido < 1/4 → fuera de servicio. Hasta 1/4 inclusive → amarillo. */
 export function isOutOfServiceFromInspection(
   inspeccion: InspeccionVehiculo | undefined
 ): boolean {
   if (!inspeccion) return false;
 
-  const motorFluids = [
+  const fluids = [
+    inspeccion.combustible,
     inspeccion.aceite,
     inspeccion.refrigerante,
     inspeccion.liquidoFrenos,
   ];
 
-  return motorFluids.some(
+  return fluids.some(
     (f) => f.raw?.trim() && isFluidOutOfServicePercent(f.percent)
   );
 }
 
-function statusFromCombustible(reading: FluidReading): Status | null {
+function statusFromFluid(reading: FluidReading): Status | null {
   if (!reading.raw?.trim()) return null;
-  return combustibleStatusFromPercent(reading.percent);
+  return fluidStatusFromPercent(reading.percent);
 }
 
-function statusFromMotorFluid(reading: FluidReading): Status | null {
-  if (!reading.raw?.trim()) return null;
-  return motorFluidStatusFromPercent(reading.percent);
-}
-
-function statusFromMotorFluids(inspeccion: InspeccionVehiculo): Status | null {
+function statusFromAllFluids(inspeccion: InspeccionVehiculo): Status | null {
   const fluids = [
+    inspeccion.combustible,
     inspeccion.aceite,
     inspeccion.refrigerante,
     inspeccion.liquidoFrenos,
@@ -115,7 +111,7 @@ function statusFromMotorFluids(inspeccion: InspeccionVehiculo): Status | null {
 
   let attention = false;
   for (const fluid of fluids) {
-    const band = statusFromMotorFluid(fluid);
+    const band = statusFromFluid(fluid);
     if (band === "outOfService") return "outOfService";
     if (band === "attention") attention = true;
   }
@@ -124,7 +120,7 @@ function statusFromMotorFluids(inspeccion: InspeccionVehiculo): Status | null {
   return null;
 }
 
-/** Luces fallidas, combustible en reserva o fluidos 25–49 % → a tener en cuenta. */
+/** Luces fallidas o fluidos en 1/4–49 % → a tener en cuenta. */
 export function isAttentionFromInspection(
   inspeccion: InspeccionVehiculo | undefined
 ): boolean {
@@ -133,9 +129,7 @@ export function isAttentionFromInspection(
   const luces = inspeccion.luces;
   if (!luces.altas.ok || !luces.bajas.ok || !luces.baliza.ok) return true;
 
-  if (statusFromCombustible(inspeccion.combustible) === "attention") return true;
-
-  return statusFromMotorFluids(inspeccion) === "attention";
+  return statusFromAllFluids(inspeccion) === "attention";
 }
 
 export function buildNovedadTexto(observaciones: string): string {

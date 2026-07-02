@@ -1,26 +1,22 @@
 import type { FluidReading } from "./inspection";
 import type { Status } from "./types";
 
-/** 0–24 % fuera de servicio, 25–49 % atención, ≥50 % operativo (aceite, refrigerante, frenos). */
-export function motorFluidStatusFromPercent(percent: number): Status | null {
-  if (percent < 25) return "outOfService";
-  if (percent < 50) return "attention";
-  return null;
-}
+/** Umbral 1/4 en el tablero (coincide con la lectura «1/4» del formulario). */
+export const FLUID_QUARTER_PERCENT = 25;
 
-/** Combustible en reserva (< 1/4) → atención; se repone en operación. */
-export function combustibleStatusFromPercent(percent: number): Status | null {
-  if (!Number.isFinite(percent) || percent <= 0) return null;
+/** ≥50 % operativo; 1/4–49 % amarillo; &lt;1/4 rojo. Aplica a todos los fluidos. */
+export function fluidStatusFromPercent(percent: number): Status | null {
+  if (percent < FLUID_QUARTER_PERCENT) return "outOfService";
   if (percent < 50) return "attention";
   return null;
 }
 
 export function isFluidOutOfServicePercent(percent: number): boolean {
-  return percent < 25;
+  return percent < FLUID_QUARTER_PERCENT;
 }
 
 export function fluidGaugeColorFromPercent(percent: number): string {
-  if (percent < 25) return "#ef4444";
+  if (percent < FLUID_QUARTER_PERCENT) return "#ef4444";
   if (percent < 50) return "#f59e0b";
   return "#22c55e";
 }
