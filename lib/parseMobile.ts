@@ -5,18 +5,30 @@ export interface ParsedMobile {
   key: string;
 }
 
+const GENERIC_MOBILE =
+  /movil\s+generico|m[oó]vil\s+gen[eé]rico|generico\s*\(\s*\)|^prestamo\b.*generico/i;
+
+/** Opción placeholder del formulario — no es una unidad real. */
+export function isGenericMobileField(raw: string): boolean {
+  const text = raw?.trim() ?? "";
+  if (!text) return true;
+  return GENERIC_MOBILE.test(text);
+}
+
 /**
  * Parsea el campo "Columna 6" del formulario de inspección.
+ * Devuelve null si el valor es genérico o no identifica un móvil real.
  */
 export function parseMobileField(raw: string): ParsedMobile | null {
   const text = raw?.trim();
-  if (!text) return null;
+  if (!text || isGenericMobileField(text)) return null;
 
   const threePart = text.match(
     /^(.+?)\s*-\s*(\d{2,5})\s*-\s*([A-Z0-9]{6,8})$/i
   );
   if (threePart) {
     const [, marca, numero, patente] = threePart;
+    if (!looksLikePatente(patente)) return null;
     return buildParsed(numero, marca.trim(), patente.toUpperCase());
   }
 
@@ -24,17 +36,18 @@ export function parseMobileField(raw: string): ParsedMobile | null {
   const numero = extractNumero(text);
   const nombre = extractNombre(text, patente, numero);
 
-  if (!patente && !numero) {
-    const slug = text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    return buildParsed(text, text, "", slug);
-  }
+  if (!patente && !numero) return null;
+
+  if (patente && !looksLikePatente(patente)) return null;
 
   return buildParsed(numero || patente, nombre || text, patente);
 }
 
 function extractPatente(text: string): string {
   const dominio = text.match(/DOMINIO\s*([A-Z0-9]{6,8})/i);
-  if (dominio) return dominio[1].toUpperCase();
+  if (dominio && looksLikePatente(dominio[1])) {
+    return dominio[1].toUpperCase();
+  }
 
   const dashPatente = text.match(/-\s*([A-Z]{2,3}\d{3}[A-Z]{0,3})\s*$/i);
   if (dashPatente && looksLikePatente(dashPatente[1])) {
@@ -94,7 +107,9 @@ function extractNombre(text: string, patente: string, numero: string): string {
 
 function looksLikePatente(value: string): boolean {
   const n = value.replace(/\s/g, "").toUpperCase();
-  return /^[A-Z]{2,3}\d{3}[A-Z]{0,3}$/.test(n) || /^[A-Z0-9]{6,8}$/.test(n);
+  if (/^[A-Z]{2,3}\d{3}[A-Z]{0,3}$/.test(n)) return true;
+  if (/^[A-Z0-9]{6,8}$/.test(n) && /\d/.test(n)) return true;
+  return false;
 }
 
 function buildParsed(
