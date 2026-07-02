@@ -9,10 +9,15 @@ import {
 import { SHEET_CONFIG } from "./config";
 import { parseCsv } from "./csv";
 
+function trimRowCells(cells: string[]): string[] {
+  const max = SHEET_CONFIG.maxColumn;
+  return cells.slice(0, max);
+}
+
 function toSheetRows(values: string[][]): SheetRow[] {
   return values.map((cells, idx) => ({
     rowIndex: idx + 1,
-    cells: cells.map((c) => String(c ?? "")),
+    cells: trimRowCells(cells.map((c) => String(c ?? ""))),
   }));
 }
 
@@ -42,8 +47,8 @@ async function fetchViaServiceAccount(sheetId: string): Promise<string[][]> {
 
   const sheets = google.sheets({ version: "v4", auth });
   const range = SHEET_CONFIG.sheetName
-    ? `${SHEET_CONFIG.sheetName}!A:AL`
-    : "A:AL";
+    ? `${SHEET_CONFIG.sheetName}!A:Z`
+    : "A:Z";
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: sheetId,

@@ -12,6 +12,7 @@ import { DuplaInfo } from "./DuplaInfo";
 interface Props {
   mobile: Mobile;
   onClose: () => void;
+  fullScreen?: boolean;
 }
 
 function HistorialItem({ item, isLatest }: { item: Novedad; isLatest: boolean }) {
@@ -34,7 +35,9 @@ function HistorialItem({ item, isLatest }: { item: Novedad; isLatest: boolean })
           </span>
         )}
       </div>
-      <p className="text-slate-300 text-sm leading-relaxed">{item.texto}</p>
+      <p className="text-slate-300 text-sm leading-relaxed break-words">
+        {item.texto}
+      </p>
       <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5">
         <span className="text-slate-500 text-xs">{item.timestamp}</span>
         {item.jefeDeCoche && (
@@ -48,81 +51,87 @@ function HistorialItem({ item, isLatest }: { item: Novedad; isLatest: boolean })
   );
 }
 
-export function DetailPanel({ mobile, onClose }: Props) {
+export function DetailPanel({ mobile, onClose, fullScreen }: Props) {
   const cfg = STATUS_CONFIG[mobile.status] ?? STATUS_CONFIG.operational;
   const historial = (mobile.historial ?? []).filter(
     (n) => !shouldHideFromHistorial(n.texto) && n.texto.trim()
   );
 
   return (
-    <div className="bg-slate-900 border border-slate-700 rounded-xl p-5 max-h-[85vh] overflow-y-auto">
-      <div className="flex items-start justify-between mb-4 sticky top-0 bg-slate-900 pb-2">
-        <div className="min-w-0 pr-2">
-          <h2 className="text-lg font-bold text-white truncate">
-            {mobile.numero}
-          </h2>
-          {mobile.nombre && (
-            <p className="text-slate-300 text-sm truncate">{mobile.nombre}</p>
-          )}
-          {mobile.patente && (
-            <p className="text-slate-400 text-sm">{mobile.patente}</p>
-          )}
+    <div
+      className={`bg-slate-900 border border-slate-700 rounded-xl flex flex-col ${
+        fullScreen ? "h-full max-h-[100dvh]" : "max-h-[85vh]"
+      }`}
+    >
+      <div className="flex-shrink-0 p-5 pb-3 border-b border-slate-800">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 pr-2">
+            <h2 className="text-lg font-bold text-white truncate">
+              {mobile.numero}
+            </h2>
+            {mobile.nombre && (
+              <p className="text-slate-300 text-sm truncate">{mobile.nombre}</p>
+            )}
+            {mobile.patente && (
+              <p className="text-slate-400 text-sm">{mobile.patente}</p>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-white text-2xl leading-none px-2 py-0.5 flex-shrink-0 touch-manipulation"
+            aria-label="Cerrar"
+          >
+            ×
+          </button>
         </div>
-        <button
-          onClick={onClose}
-          className="text-slate-400 hover:text-white text-xl leading-none px-1 flex-shrink-0"
-          aria-label="Cerrar"
+
+        <div
+          className={`flex items-center gap-2 mt-3 px-3 py-2 rounded-lg ${cfg.bg} border ${cfg.border}`}
         >
-          ×
-        </button>
+          <span className={`w-2.5 h-2.5 rounded-full ${cfg.dot}`} />
+          <span className={`font-semibold text-sm ${cfg.text}`}>{cfg.label}</span>
+        </div>
       </div>
 
-      <div
-        className={`flex items-center gap-2 mb-4 px-3 py-2 rounded-lg ${cfg.bg} border ${cfg.border}`}
-      >
-        <span className={`w-2.5 h-2.5 rounded-full ${cfg.dot}`} />
-        <span className={`font-semibold text-sm ${cfg.text}`}>{cfg.label}</span>
-      </div>
+      <div className="flex-1 overflow-y-auto min-h-0 p-5 pt-4 overscroll-contain">
+        <div className="mb-4">
+          <p className="text-slate-500 text-xs mb-0.5">Última actualización</p>
+          <p className="text-slate-200 text-sm font-medium">
+            {mobile.ultimaActualizacion}
+          </p>
+        </div>
 
-      <div className="mb-4">
-        <p className="text-slate-500 text-xs mb-0.5">Última actualización</p>
-        <p className="text-slate-200 text-sm font-medium">
-          {mobile.ultimaActualizacion}
-        </p>
-      </div>
+        <DuplaInfo jefeDeCoche={mobile.jefeDeCoche} chofer={mobile.chofer} />
 
-      <hr className="border-slate-700 mb-4" />
+        {mobile.inspeccion && (
+          <>
+            <InspectionPanel inspeccion={mobile.inspeccion} />
+            <hr className="border-slate-700 mb-4" />
+          </>
+        )}
 
-      <DuplaInfo jefeDeCoche={mobile.jefeDeCoche} chofer={mobile.chofer} />
-
-      {mobile.inspeccion && (
-        <>
-          <InspectionPanel inspeccion={mobile.inspeccion} />
-          <hr className="border-slate-700 mb-4" />
-        </>
-      )}
-
-      <div>
-        <h3 className="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-3">
-          Historial de novedades ({historial.length})
-        </h3>
-        <div className="space-y-0">
-          {historial.length === 0 ? (
-            <p className="text-slate-500 text-sm">
-              No hay observaciones en el historial.
-            </p>
-          ) : (
-            historial.map((item) => (
-              <HistorialItem
-                key={item.id}
-                item={item}
-                isLatest={
-                  item.id === mobile.ultimaNovedad?.id &&
-                  !isSinNovedadTexto(mobile.ultimaNovedad?.texto ?? "")
-                }
-              />
-            ))
-          )}
+        <div>
+          <h3 className="text-slate-400 text-xs font-semibold uppercase tracking-wide mb-3">
+            Historial de novedades ({historial.length})
+          </h3>
+          <div className="space-y-0 pb-4">
+            {historial.length === 0 ? (
+              <p className="text-slate-500 text-sm">
+                No hay observaciones en el historial.
+              </p>
+            ) : (
+              historial.map((item) => (
+                <HistorialItem
+                  key={item.id}
+                  item={item}
+                  isLatest={
+                    item.id === mobile.ultimaNovedad?.id &&
+                    !isSinNovedadTexto(mobile.ultimaNovedad?.texto ?? "")
+                  }
+                />
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>

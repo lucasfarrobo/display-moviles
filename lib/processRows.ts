@@ -4,11 +4,14 @@ import {
   buildNovedadTexto,
   cleanNovedadTexto,
   mapEstadoToStatus,
+  resolveMobileBoardStatus,
   resolveMobileStatus,
   shouldHideFromHistorial,
 } from "./status";
 import { SHEET_CONFIG, columnIndex } from "./config";
 import { parseInspeccion } from "./inspection";
+import { applyObsFluidOverrides } from "./obsFluids";
+import { isForcedOutOfService } from "./forcedOutOfService";
 import { resolveRowTimestamp } from "./timestamp";
 
 export interface SheetRow {
@@ -198,9 +201,15 @@ export function buildMobilesFromRows(rows: SheetRow[]): Mobile[] {
       .map((n) => ({ ...n, texto: cleanNovedadTexto(n.texto) }))
       .filter((n) => !shouldHideFromHistorial(n.texto) && n.texto.trim());
 
-    const mobileStatus = resolveMobileStatus(
+    let mobileStatus = resolveMobileBoardStatus(sorted);
+    if (isForcedOutOfService(parsed.patente)) {
+      mobileStatus = "outOfService";
+    }
+
+    const ultimaObs = ultima.texto;
+    const inspeccionDisplay = applyObsFluidOverrides(
       ultima.inspeccion,
-      ultima.texto
+      ultimaObs
     );
 
     mobiles.push({
@@ -213,7 +222,7 @@ export function buildMobilesFromRows(rows: SheetRow[]): Mobile[] {
       ultimaNovedad: ultima,
       historial,
       totalNovedades: historial.length,
-      inspeccion: ultima.inspeccion,
+      inspeccion: inspeccionDisplay,
       jefeDeCoche: ultima.jefeDeCoche,
       chofer: ultima.reportadoPor,
     });

@@ -1,7 +1,7 @@
 "use client";
 
 import type { FluidReading, InspeccionVehiculo, LuzEstado } from "@/lib/inspection";
-import { isAttentionFromInspection } from "@/lib/status";
+import { isAttentionFromInspection, isOutOfServiceFromInspection } from "@/lib/status";
 
 function fluidColor(reading: FluidReading, motorFluid = false): string {
   if (!reading.raw?.trim()) return "#64748b";
@@ -91,7 +91,9 @@ interface Props {
 }
 
 export function InspectionPanel({ inspeccion }: Props) {
-  const alerta = isAttentionFromInspection(inspeccion);
+  const alerta =
+    isOutOfServiceFromInspection(inspeccion) ||
+    isAttentionFromInspection(inspeccion);
 
   return (
     <div className="mb-4">

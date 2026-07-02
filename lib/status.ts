@@ -1,5 +1,6 @@
 import type { Status } from "./types";
 import type { FluidReading, InspeccionVehiculo } from "./inspection";
+import { applyObsFluidOverrides } from "./obsFluids";
 
 export function mapEstadoToStatus(estadoRaw: string): Status {
   const val = estadoRaw?.toLowerCase().trim() ?? "";
@@ -31,26 +32,55 @@ export function mapEstadoToStatus(estadoRaw: string): Status {
   return "operational";
 }
 
-/** Fuera de servicio solo por estas causas en observaciones. */
+/** Estado del tablero: historial completo (rojo) + última inspección. */
 export function isOutOfServiceObs(observaciones: string): boolean {
   const obs = observaciones.toLowerCase();
 
   if (/no\s+arranca/i.test(obs)) return true;
-  if (/falta\s+de\s+aceite\s+en\s+caja|aceite\s+(?:de\s+)?caja|aceite\s+en\s+caja/i.test(obs)) {
+  if (/inund|inundado/i.test(obs)) return true;
+  if (
+    /falta\s+de\s+aceite\s+en\s+caja|aceite\s+(?:de\s+)?caja|aceite\s+en\s+caja/i.test(
+      obs
+    )
+  ) {
     return true;
   }
   if (/siniestr/i.test(obs)) return true;
-  if (/sin\s+bater[ií]a|no\s+tiene\s+bater[ií]a|bater[ií]a\s+(?:sin|faltante|descargada)/i.test(obs)) {
+  if (
+    /sin\s+bater[ií]a|sin\s+batear[ií]a|no\s+tiene\s+bater[ií]a|bater[ií]a\s+(?:sin|faltante|descargada)/i.test(
+      obs
+    )
+  ) {
     return true;
   }
-  if (/sin\s+patente|no\s+posee\s+patente|falta\s+(?:la\s+)?patente|patente\s+(?:delantera|trasera)?\s*(?:sin|faltante)/i.test(obs)) {
+  if (
+    /sin\s+patente|no\s+posee\s+patente|falta\s+(?:la\s+)?patente|patente\s+(?:delantera|trasera)?\s*(?:sin|faltante)/i.test(
+      obs
+    )
+  ) {
     return true;
   }
 
   return false;
 }
 
-/** Aceite, refrigerante y líq. de frenos: 1/2=OK, entre 1/2 y 1/4=amarillo, ≤1/4=rojo. */
+/** Luces bajas fallidas o fluidos ≤ 1/4 → fuera de servicio. */
+export function isOutOfServiceFromInspection(
+  inspeccion: InspeccionVehiculo | undefined
+): boolean {
+  if (!inspeccion) return false;
+  if (!inspeccion.luces.bajas.ok) return true;
+
+  const fluids = [
+    inspeccion.combustible,
+    inspeccion.aceite,
+    inspeccion.refrigerante,
+    inspeccion.liquidoFrenos,
+  ];
+
+  return fluids.some((f) => f.raw?.trim() && f.percent <= 25);
+}
+
 function statusFromMotorFluid(reading: FluidReading): Status | null {
   if (!reading.raw?.trim()) return null;
   if (reading.percent <= 25) return "outOfService";
@@ -60,6 +90,7 @@ function statusFromMotorFluid(reading: FluidReading): Status | null {
 
 function statusFromMotorFluids(inspeccion: InspeccionVehiculo): Status | null {
   const fluids = [
+    inspeccion.combustible,
     inspeccion.aceite,
     inspeccion.refrigerante,
     inspeccion.liquidoFrenos,
@@ -73,18 +104,14 @@ function statusFromMotorFluids(inspeccion: InspeccionVehiculo): Status | null {
   }
 
   if (attention) return "attention";
-  if (!inspeccion.luces.bajas.ok) return "attention";
-
   return null;
 }
 
-/** A tener en cuenta por inspección (fluidos en banda media o luces bajas). */
 export function isAttentionFromInspection(
   inspeccion: InspeccionVehiculo | undefined
 ): boolean {
   if (!inspeccion) return false;
-  const band = statusFromMotorFluids(inspeccion);
-  return band === "attention";
+  return statusFromMotorFluids(inspeccion) === "attention";
 }
 
 export function buildNovedadTexto(observaciones: string): string {
@@ -123,22 +150,39 @@ export function shouldHideFromHistorial(texto: string): boolean {
   return isSinNovedadTexto(texto) || isHigieneOnlyTexto(texto);
 }
 
-/** Estado del tablero según reglas de negocio actuales. */
+/** Estado de una inspección puntual. */
 export function resolveMobileStatus(
   inspeccion: InspeccionVehiculo | undefined,
   observaciones: string
 ): Status {
   const obs = stripHigieneLines(observaciones?.trim() ?? "");
+  const merged = applyObsFluidOverrides(inspeccion, obs);
 
   if (isOutOfServiceObs(obs)) return "outOfService";
+  if (isOutOfServiceFromInspection(merged)) return "outOfService";
 
-  if (inspeccion) {
-    const fluidStatus = statusFromMotorFluids(inspeccion);
-    if (fluidStatus === "outOfService") return "outOfService";
-    if (fluidStatus === "attention") return "attention";
-  }
+  const fluidStatus = merged ? statusFromMotorFluids(merged) : null;
+  if (fluidStatus === "attention") return "attention";
 
   return "operational";
+}
+
+/** Estado del tablero: historial completo (rojo) + última inspección. */
+export function resolveMobileBoardStatus(
+  novedades: Array<{
+    texto: string;
+    inspeccion?: InspeccionVehiculo;
+  }>
+): Status {
+  if (novedades.length === 0) return "operational";
+
+  for (const n of novedades) {
+    const obs = stripHigieneLines(n.texto?.trim() ?? "");
+    if (isOutOfServiceObs(obs)) return "outOfService";
+  }
+
+  const ultima = novedades[0];
+  return resolveMobileStatus(ultima.inspeccion, ultima.texto);
 }
 
 export function cleanNovedadTexto(texto: string): string {

@@ -103,15 +103,15 @@ export function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-3 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 sm:mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Display de Móviles</h1>
-          <p className="text-slate-400 text-sm mt-0.5">
-            Estado actual por unidad · historial de novedades desde Google Sheets
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Display de Móviles</h1>
+          <p className="text-slate-400 text-xs sm:text-sm mt-0.5">
+            Estado por unidad · historial desde Google Sheets
           </p>
         </div>
-        <div className="text-right">
+        <div className="text-left sm:text-right">
           <span className="text-slate-500 text-xs block">
             {mobiles.length} unidades
           </span>
@@ -126,7 +126,7 @@ export function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div className="bg-green-950/50 border border-green-800 rounded-xl p-4">
           <p className="text-3xl font-bold text-green-400">{counts.operational}</p>
           <p className="text-green-300 text-sm mt-1">Operativos</p>
@@ -157,11 +157,11 @@ export function Dashboard() {
         ))}
       </div>
 
-      <div className="flex gap-5 items-start">
-        <div className="flex-1 min-w-0">
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-5 items-start">
+        <div className="flex-1 min-w-0 w-full">
           <div
-            className={`grid gap-3 ${
-              selectedMobile ? "grid-cols-2 lg:grid-cols-2" : "grid-cols-2 lg:grid-cols-3"
+            className={`grid gap-3 grid-cols-1 sm:grid-cols-2 ${
+              selectedMobile ? "lg:grid-cols-2" : "lg:grid-cols-3"
             }`}
           >
             {filtered.map((mobile) => (
@@ -183,12 +183,21 @@ export function Dashboard() {
         </div>
 
         {selectedMobile && (
-          <div className="w-full lg:w-[28rem] flex-shrink-0 sticky top-6">
-            <DetailPanel
-              mobile={selectedMobile}
-              onClose={() => setSelectedId(null)}
-            />
-          </div>
+          <>
+            <div className="lg:hidden fixed inset-0 z-50 bg-slate-950/98 p-2 pt-3">
+              <DetailPanel
+                mobile={selectedMobile}
+                onClose={() => setSelectedId(null)}
+                fullScreen
+              />
+            </div>
+            <div className="hidden lg:block w-full lg:w-[28rem] flex-shrink-0 sticky top-4 self-start">
+              <DetailPanel
+                mobile={selectedMobile}
+                onClose={() => setSelectedId(null)}
+              />
+            </div>
+          </>
         )}
       </div>
 

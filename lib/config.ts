@@ -31,6 +31,9 @@ export const SHEET_CONFIG = {
 
   /** Sin columna de estado explícita en este formulario */
   columnEstado: Number(process.env.SHEET_COL_ESTADO ?? 0),
+
+  /** Última columna a leer del sheet (Z = 26) */
+  maxColumn: Number(process.env.SHEET_MAX_COLUMN ?? 26),
 } as const;
 
 export function columnIndex(oneBased: number): number {

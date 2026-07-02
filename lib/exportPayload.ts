@@ -21,3 +21,21 @@ export function slimMobilesResponse(data: MobilesResponse): MobilesResponse {
     mobiles: data.mobiles.map(slimMobileForExport),
   };
 }
+
+/** JSON liviano para consulta rápida en teléfonos. */
+export function buildMobileSummary(data: MobilesResponse) {
+  return {
+    updatedAt: data.updatedAt,
+    source: data.source,
+    mobiles: data.mobiles.map((m) => ({
+      id: m.id,
+      numero: m.numero,
+      nombre: m.nombre,
+      patente: m.patente,
+      status: m.status,
+      jefeDeCoche: m.jefeDeCoche,
+      chofer: m.chofer,
+      ultimaActualizacion: m.ultimaActualizacion,
+    })),
+  };
+}
