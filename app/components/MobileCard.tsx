@@ -2,7 +2,6 @@
 
 import type { Mobile, Status } from "@/lib/types";
 import { isSinNovedadTexto, isHigieneOnlyTexto, shouldHideFromHistorial } from "@/lib/status";
-import { hasFluidoCritico, hasLuzFallida } from "@/lib/inspection";
 
 const STATUS_CONFIG: Record<
   Status,
@@ -50,9 +49,7 @@ export function MobileCard({ mobile, selected, onClick }: Props) {
         )?.texto
       : rawPreview;
 
-  const alertaInspeccion =
-    mobile.inspeccion &&
-    (hasFluidoCritico(mobile.inspeccion) || hasLuzFallida(mobile.inspeccion));
+  const alertaInspeccion = mobile.status !== "operational";
 
   return (
     <button

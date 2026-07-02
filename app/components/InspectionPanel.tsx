@@ -1,17 +1,33 @@
 "use client";
 
 import type { FluidReading, InspeccionVehiculo, LuzEstado } from "@/lib/inspection";
-import { hasFluidoCritico, hasLuzFallida } from "@/lib/inspection";
+import { isAttentionFromInspection } from "@/lib/status";
 
-function fluidColor(reading: FluidReading): string {
+function fluidColor(reading: FluidReading, motorFluid = false): string {
+  if (!reading.raw?.trim()) return "#64748b";
+
+  if (motorFluid) {
+    if (reading.percent <= 25) return "#ef4444";
+    if (reading.percent > 25 && reading.percent < 50) return "#f59e0b";
+    return "#22c55e";
+  }
+
   if (reading.critical || reading.level === "low") return "#ef4444";
   if (reading.level === "medium") return "#f59e0b";
   if (reading.level === "full") return "#22c55e";
   return "#64748b";
 }
 
-function FluidGauge({ label, reading }: { label: string; reading: FluidReading }) {
-  const color = fluidColor(reading);
+function FluidGauge({
+  label,
+  reading,
+  motorFluid = false,
+}: {
+  label: string;
+  reading: FluidReading;
+  motorFluid?: boolean;
+}) {
+  const color = fluidColor(reading, motorFluid);
   const pct = Math.max(8, Math.min(100, reading.percent || 0));
   const display = reading.raw || "—";
 
@@ -75,8 +91,7 @@ interface Props {
 }
 
 export function InspectionPanel({ inspeccion }: Props) {
-  const alerta =
-    hasFluidoCritico(inspeccion) || hasLuzFallida(inspeccion);
+  const alerta = isAttentionFromInspection(inspeccion);
 
   return (
     <div className="mb-4">
@@ -91,9 +106,9 @@ export function InspectionPanel({ inspeccion }: Props) {
 
       <div className="grid grid-cols-4 gap-2 mb-4 p-3 rounded-lg bg-slate-800/40 border border-slate-700">
         <FluidGauge label="Combustible" reading={inspeccion.combustible} />
-        <FluidGauge label="Aceite" reading={inspeccion.aceite} />
-        <FluidGauge label="Refrigerante" reading={inspeccion.refrigerante} />
-        <FluidGauge label="Líq. frenos" reading={inspeccion.liquidoFrenos} />
+        <FluidGauge label="Aceite" reading={inspeccion.aceite} motorFluid />
+        <FluidGauge label="Refrigerante" reading={inspeccion.refrigerante} motorFluid />
+        <FluidGauge label="Líq. frenos" reading={inspeccion.liquidoFrenos} motorFluid />
       </div>
 
       <div className="space-y-2">
@@ -109,5 +124,3 @@ export function InspectionPanel({ inspeccion }: Props) {
     </div>
   );
 }
-
-export { hasFluidoCritico, hasLuzFallida };

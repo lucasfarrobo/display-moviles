@@ -82,8 +82,14 @@ export function parseFluidLevel(raw: string): FluidReading {
   if (val.includes("MEDIO") || val.includes("1/2")) {
     return { raw, percent: 50, level: "medium", critical: false };
   }
-  if (val.includes("BAJO") || val.includes("RESERVA") || val.includes("1/4")) {
+  if (val.includes("1/4") || val.includes("RESERVA")) {
     return { raw, percent: 20, level: "low", critical: true };
+  }
+  if (val.includes("MUY BAJO")) {
+    return { raw, percent: 10, level: "low", critical: true };
+  }
+  if (val.includes("BAJO")) {
+    return { raw, percent: 35, level: "low", critical: false };
   }
 
   return { raw, percent: 0, level: "unknown", critical: false };
