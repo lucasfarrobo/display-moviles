@@ -46,7 +46,9 @@ export function applyObsFluidOverrides(
     patch("combustible", lowFluid("1/4 (obs.)"));
   }
 
-  if (
+  if (/aceite\s+m[ií]nimo/i.test(obs)) {
+    next.aceite = mediumFluid("MÍNIMO (obs.)");
+  } else if (
     /aceite\s+(?:muy\s+)?bajo|aceite\s+.*1\/4|nivel\s+de\s+aceite\s+bajo/i.test(
       obs
     )
@@ -56,7 +58,9 @@ export function applyObsFluidOverrides(
     patch("aceite", mediumFluid("MEDIO (obs.)"));
   }
 
-  if (
+  if (/refrigerante\s+m[ií]nimo|refrigeraci[oó]n\s+m[ií]nima/i.test(obs)) {
+    next.refrigerante = mediumFluid("MÍNIMO (obs.)");
+  } else if (
     /refrigerante\s+(?:muy\s+)?bajo|refrigeraci[oó]n\s+baja|refrigerante\s+.*1\/4/i.test(
       obs
     )
