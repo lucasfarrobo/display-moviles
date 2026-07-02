@@ -3,7 +3,6 @@
 import type { Mobile, Status } from "@/lib/types";
 import { isSinNovedadTexto, isHigieneOnlyTexto, shouldHideFromHistorial } from "@/lib/status";
 import { hasFluidoCritico, hasLuzFallida } from "@/lib/inspection";
-import { DuplaInfo } from "./DuplaInfo";
 
 const STATUS_CONFIG: Record<
   Status,
@@ -64,23 +63,38 @@ export function MobileCard({ mobile, selected, onClick }: Props) {
         ${selected ? `ring-2 ${cfg.ring}` : "hover:brightness-110"}
       `}
     >
-      <div className="flex items-center justify-between mb-1">
+      <div className="flex items-start justify-between gap-2 mb-1">
         <div className="flex items-center gap-2 min-w-0">
           <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
           <span className={`font-bold text-base truncate ${cfg.text}`}>
             {mobile.numero}
           </span>
         </div>
-        {alertaInspeccion && (
-          <span className="text-amber-400 text-xs flex-shrink-0" title="Revisar inspección">
-            ⚠
-          </span>
-        )}
-        {mobile.totalNovedades > 1 && (
-          <span className="text-slate-400 text-xs flex-shrink-0">
-            {mobile.totalNovedades} novedades
-          </span>
-        )}
+
+        <div className="flex flex-col items-end text-right flex-shrink-0 max-w-[58%]">
+          <div className="flex items-center gap-1.5">
+            {alertaInspeccion && (
+              <span className="text-amber-400 text-xs" title="Revisar inspección">
+                ⚠
+              </span>
+            )}
+            {mobile.totalNovedades > 1 && (
+              <span className="text-slate-400 text-xs">
+                {mobile.totalNovedades} novedades
+              </span>
+            )}
+          </div>
+          {mobile.jefeDeCoche && (
+            <p className="text-slate-400 text-[10px] leading-snug mt-1 line-clamp-2">
+              <span className="text-slate-500">Jefe de Coche:</span> {mobile.jefeDeCoche}
+            </p>
+          )}
+          {mobile.chofer && (
+            <p className="text-slate-400 text-[10px] leading-snug mt-0.5 line-clamp-2">
+              <span className="text-slate-500">Chofer:</span> {mobile.chofer}
+            </p>
+          )}
+        </div>
       </div>
 
       {mobile.nombre && (
@@ -91,12 +105,6 @@ export function MobileCard({ mobile, selected, onClick }: Props) {
       {mobile.patente && (
         <div className="text-slate-400 text-xs mt-0.5">{mobile.patente}</div>
       )}
-
-      <DuplaInfo
-        jefeDeCoche={mobile.jefeDeCoche}
-        chofer={mobile.chofer}
-        compact
-      />
 
       {preview && (
         <div className={`mt-2 px-2 py-1 rounded text-xs bg-black/30 line-clamp-2 ${cfg.text}`}>
