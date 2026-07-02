@@ -1,6 +1,10 @@
 import type { Status } from "./types";
 import type { FluidReading, InspeccionVehiculo } from "./inspection";
 import { applyObsFluidOverrides } from "./obsFluids";
+import {
+  isFluidOutOfServicePercent,
+  motorFluidStatusFromPercent,
+} from "./fluidBands";
 
 export function mapEstadoToStatus(estadoRaw: string): Status {
   const val = estadoRaw?.toLowerCase().trim() ?? "";
@@ -64,7 +68,7 @@ export function isOutOfServiceObs(observaciones: string): boolean {
   return false;
 }
 
-/** Luces bajas fallidas o fluidos ≤ 1/4 → fuera de servicio. */
+/** Luces bajas fallidas o fluidos < 1/4 (0–24 %) → fuera de servicio. */
 export function isOutOfServiceFromInspection(
   inspeccion: InspeccionVehiculo | undefined
 ): boolean {
@@ -78,19 +82,18 @@ export function isOutOfServiceFromInspection(
     inspeccion.liquidoFrenos,
   ];
 
-  return fluids.some((f) => f.raw?.trim() && f.percent <= 25);
+  return fluids.some(
+    (f) => f.raw?.trim() && isFluidOutOfServicePercent(f.percent)
+  );
 }
 
 function statusFromMotorFluid(reading: FluidReading): Status | null {
   if (!reading.raw?.trim()) return null;
-  if (reading.percent <= 25) return "outOfService";
-  if (reading.percent > 25 && reading.percent < 50) return "attention";
-  return null;
+  return motorFluidStatusFromPercent(reading.percent);
 }
 
 function statusFromMotorFluids(inspeccion: InspeccionVehiculo): Status | null {
   const fluids = [
-    inspeccion.combustible,
     inspeccion.aceite,
     inspeccion.refrigerante,
     inspeccion.liquidoFrenos,
