@@ -120,14 +120,13 @@ function statusFromAllFluids(inspeccion: InspeccionVehiculo): Status | null {
   return null;
 }
 
-/** Luces fallidas o fluidos en 1/4–49 % → a tener en cuenta. */
+/** Baliza fallida o fluidos en 1/4–49 % → a tener en cuenta. Altas/bajas → solo leyenda. */
 export function isAttentionFromInspection(
   inspeccion: InspeccionVehiculo | undefined
 ): boolean {
   if (!inspeccion) return false;
 
-  const luces = inspeccion.luces;
-  if (!luces.altas.ok || !luces.bajas.ok || !luces.baliza.ok) return true;
+  if (!inspeccion.luces.baliza.ok) return true;
 
   return statusFromAllFluids(inspeccion) === "attention";
 }

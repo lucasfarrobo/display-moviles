@@ -121,6 +121,24 @@ export function hasLucesAltasFallidas(inspeccion: InspeccionVehiculo): boolean {
   return !inspeccion.luces.altas.ok;
 }
 
+export function hasLucesBajasFallidas(inspeccion: InspeccionVehiculo): boolean {
+  return !inspeccion.luces.bajas.ok;
+}
+
+/** Luces altas y/o bajas fallidas: no cambian el color del tablero (solo leyenda). */
+export function hasLucesCarreteraFallidas(inspeccion: InspeccionVehiculo): boolean {
+  return hasLucesAltasFallidas(inspeccion) || hasLucesBajasFallidas(inspeccion);
+}
+
+export function lucesPrecaucionTexto(inspeccion: InspeccionVehiculo): string | null {
+  const altas = hasLucesAltasFallidas(inspeccion);
+  const bajas = hasLucesBajasFallidas(inspeccion);
+  if (altas && bajas) return "Luces altas y bajas quemadas — precaución";
+  if (altas) return "Luces altas quemadas — precaución";
+  if (bajas) return "Luces bajas quemadas — precaución";
+  return null;
+}
+
 export function hasLuzCriticaFallida(inspeccion: InspeccionVehiculo): boolean {
   return !inspeccion.luces.bajas.ok || !inspeccion.luces.baliza.ok;
 }

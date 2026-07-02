@@ -2,6 +2,7 @@
 
 import type { Mobile, Status } from "@/lib/types";
 import { isSinNovedadTexto, isHigieneOnlyTexto, shouldHideFromHistorial } from "@/lib/status";
+import { lucesPrecaucionTexto } from "@/lib/inspection";
 
 const STATUS_CONFIG: Record<
   Status,
@@ -50,6 +51,10 @@ export function MobileCard({ mobile, selected, onClick }: Props) {
       : rawPreview;
 
   const alertaInspeccion = mobile.status !== "operational";
+  const leyendaLuces =
+    mobile.status !== "outOfService" && mobile.inspeccion
+      ? lucesPrecaucionTexto(mobile.inspeccion)
+      : null;
 
   return (
     <button
@@ -70,6 +75,14 @@ export function MobileCard({ mobile, selected, onClick }: Props) {
 
         <div className="flex flex-col items-end text-right flex-shrink-0 max-w-[58%]">
           <div className="flex items-center gap-1.5">
+            {leyendaLuces && (
+              <span
+                className="text-amber-400 text-xs"
+                title={leyendaLuces}
+              >
+                ⚠
+              </span>
+            )}
             {alertaInspeccion && (
               <span className="text-amber-400 text-xs" title="Revisar inspección">
                 ⚠
@@ -101,6 +114,13 @@ export function MobileCard({ mobile, selected, onClick }: Props) {
       )}
       {mobile.patente && (
         <div className="text-slate-400 text-xs mt-0.5">{mobile.patente}</div>
+      )}
+
+      {leyendaLuces && (
+        <div className="mt-1.5 px-2 py-1 rounded text-[10px] bg-amber-950/40 border border-amber-800/50 text-amber-300 flex items-center gap-1.5">
+          <span aria-hidden>⚠</span>
+          {leyendaLuces}
+        </div>
       )}
 
       {preview && (

@@ -1,7 +1,11 @@
 "use client";
 
 import type { FluidReading, InspeccionVehiculo, LuzEstado } from "@/lib/inspection";
-import { hasLuzFallida } from "@/lib/inspection";
+import {
+  hasLucesCarreteraFallidas,
+  hasLuzFallida,
+  lucesPrecaucionTexto,
+} from "@/lib/inspection";
 import { fluidGaugeColor } from "@/lib/fluidBands";
 import { isAttentionFromInspection, isOutOfServiceFromInspection } from "@/lib/status";
 
@@ -113,6 +117,9 @@ export function InspectionPanel({ inspeccion }: Props) {
   const alertaAtencion =
     !alertaCritica && isAttentionFromInspection(inspeccion);
   const lucesFallidas = hasLuzFallida(inspeccion);
+  const precaucionLuces = lucesPrecaucionTexto(inspeccion);
+  const soloPrecaucionLuces =
+    Boolean(precaucionLuces) && !alertaCritica && !alertaAtencion;
 
   return (
     <div className="mb-4">
@@ -125,10 +132,24 @@ export function InspectionPanel({ inspeccion }: Props) {
         )}
         {alertaAtencion && (
           <span className="ml-2 text-amber-400 normal-case font-normal">
-            · {lucesFallidas ? "luces a revisar" : "a tener en cuenta"}
+            · {lucesFallidas && !hasLucesCarreteraFallidas(inspeccion)
+              ? "luces a revisar"
+              : "a tener en cuenta"}
+          </span>
+        )}
+        {soloPrecaucionLuces && (
+          <span className="ml-2 text-amber-400 normal-case font-normal">
+            · precaución luces
           </span>
         )}
       </h3>
+
+      {soloPrecaucionLuces && precaucionLuces && (
+        <div className="mb-3 px-2.5 py-2 rounded-lg bg-amber-950/40 border border-amber-800/50 text-amber-300 text-xs flex items-center gap-2">
+          <span aria-hidden>⚠</span>
+          {precaucionLuces} — móvil operativo
+        </div>
+      )}
 
       <div className="grid grid-cols-4 gap-2 mb-4 p-3 rounded-lg bg-slate-800/40 border border-slate-700">
         <FluidGauge label="Combustible" reading={inspeccion.combustible} />
