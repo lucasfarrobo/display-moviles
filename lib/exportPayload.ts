@@ -36,6 +36,7 @@ export function buildMobileSummary(data: MobilesResponse) {
       jefeDeCoche: m.jefeDeCoche,
       chofer: m.chofer,
       ultimaActualizacion: m.ultimaActualizacion,
+      motivoFueraDeServicio: m.motivoFueraDeServicio,
     })),
   };
 }

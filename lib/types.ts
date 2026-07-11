@@ -28,6 +28,8 @@ export interface Mobile {
   inspeccion?: InspeccionVehiculo;
   jefeDeCoche?: string;
   chofer?: string;
+  /** Motivo confirmado cuando el tablero fuerza fuera de servicio. */
+  motivoFueraDeServicio?: string;
 }
 
 export interface MobilesResponse {

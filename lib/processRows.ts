@@ -11,6 +11,7 @@ import {
 import { SHEET_CONFIG, columnIndex } from "./config";
 import { parseInspeccion } from "./inspection";
 import { applyObsFluidOverrides } from "./obsFluids";
+import { getForcedOutOfServiceMotivo } from "./forcedOutOfService";
 import { resolveRowTimestamp } from "./timestamp";
 
 export interface SheetRow {
@@ -201,6 +202,13 @@ export function buildMobilesFromRows(rows: SheetRow[]): Mobile[] {
       .filter((n) => !shouldHideFromHistorial(n.texto) && n.texto.trim());
 
     let mobileStatus = resolveMobileBoardStatus(sorted);
+    const motivoFueraDeServicio = getForcedOutOfServiceMotivo(
+      parsed.patente,
+      parsed.numero
+    );
+    if (motivoFueraDeServicio) {
+      mobileStatus = "outOfService";
+    }
 
     const ultimaObs = ultima.texto;
     const inspeccionDisplay = applyObsFluidOverrides(
@@ -221,6 +229,7 @@ export function buildMobilesFromRows(rows: SheetRow[]): Mobile[] {
       inspeccion: inspeccionDisplay,
       jefeDeCoche: ultima.jefeDeCoche,
       chofer: ultima.reportadoPor,
+      motivoFueraDeServicio: motivoFueraDeServicio ?? undefined,
     });
   }
 

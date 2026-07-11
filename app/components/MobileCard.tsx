@@ -116,6 +116,13 @@ export function MobileCard({ mobile, selected, onClick }: Props) {
         <div className="text-slate-400 text-xs mt-0.5">{mobile.patente}</div>
       )}
 
+      {mobile.status === "outOfService" && mobile.motivoFueraDeServicio && (
+        <div className="mt-1.5 px-2 py-1 rounded text-[10px] bg-red-950/50 border border-red-800/60 text-red-300 flex items-center gap-1.5">
+          <span aria-hidden>⛔</span>
+          Fuera de servicio — {mobile.motivoFueraDeServicio}
+        </div>
+      )}
+
       {leyendaLuces && (
         <div className="mt-1.5 px-2 py-1 rounded text-[10px] bg-amber-950/40 border border-amber-800/50 text-amber-300 flex items-center gap-1.5">
           <span aria-hidden>⚠</span>

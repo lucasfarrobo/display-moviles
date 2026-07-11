@@ -91,6 +91,12 @@ export function DetailPanel({ mobile, onClose, fullScreen }: Props) {
           <span className={`w-2.5 h-2.5 rounded-full ${cfg.dot}`} />
           <span className={`font-semibold text-sm ${cfg.text}`}>{cfg.label}</span>
         </div>
+
+        {mobile.motivoFueraDeServicio && (
+          <p className="mt-2 text-red-300 text-sm leading-snug">
+            {mobile.motivoFueraDeServicio}
+          </p>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto min-h-0 p-5 pt-4 overscroll-contain">
