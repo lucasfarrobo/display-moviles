@@ -5,14 +5,12 @@ import {
   cleanNovedadTexto,
   mapEstadoToStatus,
   resolveMobileBoardStatus,
-  resolveMobileStatus,
+  resolveNovedadStatus,
   shouldHideFromHistorial,
 } from "./status";
 import { SHEET_CONFIG, columnIndex } from "./config";
 import { parseInspeccion } from "./inspection";
 import { applyObsFluidOverrides } from "./obsFluids";
-import { isForcedOutOfService } from "./forcedOutOfService";
-import { isForcedOperational } from "./operationalOverrides";
 import { resolveRowTimestamp } from "./timestamp";
 
 export interface SheetRow {
@@ -129,7 +127,7 @@ function rowToNovedad(
 
   const status = estadoRaw
     ? mapEstadoToStatus(estadoRaw)
-    : resolveMobileStatus(inspeccion, observaciones);
+    : resolveNovedadStatus(novedadText, observaciones);
 
   const novedad: Novedad = {
     id: `row-${row.rowIndex}`,
@@ -203,11 +201,6 @@ export function buildMobilesFromRows(rows: SheetRow[]): Mobile[] {
       .filter((n) => !shouldHideFromHistorial(n.texto) && n.texto.trim());
 
     let mobileStatus = resolveMobileBoardStatus(sorted);
-    if (isForcedOutOfService(parsed.patente)) {
-      mobileStatus = "outOfService";
-    } else if (isForcedOperational(parsed.numero)) {
-      mobileStatus = "operational";
-    }
 
     const ultimaObs = ultima.texto;
     const inspeccionDisplay = applyObsFluidOverrides(

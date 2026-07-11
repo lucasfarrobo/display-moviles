@@ -1,6 +1,5 @@
 import type { Status } from "./types";
 import type { FluidReading, InspeccionVehiculo } from "./inspection";
-import { applyObsFluidOverrides } from "./obsFluids";
 import {
   fluidStatusFromPercent,
   isFluidOutOfServicePercent,
@@ -163,41 +162,62 @@ export function isSinNovedadTexto(texto: string): boolean {
   return false;
 }
 
+/** Parte/accesorio fuera de servicio — no implica que el móvil completo lo esté. */
+function isParteFueraDeServicioEnNovedad(obs: string): boolean {
+  return /(?:baliza|botonera|tecla|rueda(?:\s+de\s+auxilio)?|auxilio|estuche|bot[oó]n(?:era)?|sirena|señal\s+sonora|llave\s+de|matafuego|óptica|optica)\b[^.;\n]{0,50}\bfuera\s+de\s+servicio\b/i.test(
+    obs
+  );
+}
+
+/**
+ * El móvil figura explícitamente fuera de servicio en la novedad
+ * (no accesorios sueltos tipo «botonera fuera de servicio»).
+ */
+export function isVehiculoFueraDeServicioEnNovedad(texto: string): boolean {
+  const obs = stripHigieneLines(texto ?? "").trim().toLowerCase();
+  if (!obs || isSinNovedadTexto(obs)) return false;
+  if (isParteFueraDeServicioEnNovedad(obs)) return false;
+
+  if (/\b(?:m[oó]vil|unidad|veh[ií]culo|interno)\b[^.;\n]{0,40}\bfuera\s+de\s+servicio\b/i.test(obs)) {
+    return true;
+  }
+  if (/\bqueda\s+fuera\s+de\s+servicio\b/i.test(obs)) return true;
+  if (/\b(?:se\s+encuentra|est[aá])\s+fuera\s+de\s+servicio\b/i.test(obs)) return true;
+  if (/^fuera\s+de\s+servicio\b/i.test(obs)) return true;
+  if (/\bfuera\s+de\s+servicio\s*\.?\s*$/i.test(obs)) return true;
+  if (/\bfuera\s+servicio\b/i.test(obs)) return true;
+  if (/\bfds\b/i.test(obs)) return true;
+
+  return false;
+}
+
+export function resolveNovedadStatus(
+  texto: string,
+  observacionesRaw?: string
+): Status {
+  const candidates = [observacionesRaw, texto].filter(Boolean) as string[];
+  for (const t of candidates) {
+    if (isVehiculoFueraDeServicioEnNovedad(t)) return "outOfService";
+  }
+  return "operational";
+}
+
 export function shouldHideFromHistorial(texto: string): boolean {
   return isSinNovedadTexto(texto) || isHigieneOnlyTexto(texto);
 }
 
-/** Estado de una inspección puntual. */
-export function resolveMobileStatus(
-  inspeccion: InspeccionVehiculo | undefined,
-  observaciones: string
-): Status {
-  const obs = stripHigieneLines(observaciones?.trim() ?? "");
-  const merged = applyObsFluidOverrides(inspeccion, obs);
-
-  if (isOutOfServiceObs(obs)) return "outOfService";
-  if (isOutOfServiceFromInspection(merged)) return "outOfService";
-  if (merged && isAttentionFromInspection(merged)) return "attention";
-
-  return "operational";
-}
-
-/** Estado del tablero: historial completo (rojo) + última inspección. */
+/** Tablero: rojo solo si la última novedad declara el móvil fuera de servicio. */
 export function resolveMobileBoardStatus(
   novedades: Array<{
     texto: string;
+    status?: Status;
     inspeccion?: InspeccionVehiculo;
   }>
 ): Status {
   if (novedades.length === 0) return "operational";
-
-  for (const n of novedades) {
-    const obs = stripHigieneLines(n.texto?.trim() ?? "");
-    if (isPermanentOutOfServiceObs(obs)) return "outOfService";
-  }
-
   const ultima = novedades[0];
-  return resolveMobileStatus(ultima.inspeccion, ultima.texto);
+  if (ultima.status === "outOfService") return "outOfService";
+  return resolveNovedadStatus(ultima.texto);
 }
 
 export function cleanNovedadTexto(texto: string): string {
