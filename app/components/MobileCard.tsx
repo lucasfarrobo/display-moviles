@@ -52,7 +52,7 @@ export function MobileCard({ mobile, selected, onClick }: Props) {
 
   const alertaInspeccion = mobile.status !== "operational";
   const leyendaLuces =
-    mobile.status !== "outOfService" && mobile.inspeccion
+    mobile.status === "operational" && mobile.inspeccion
       ? lucesPrecaucionTexto(mobile.inspeccion)
       : null;
 

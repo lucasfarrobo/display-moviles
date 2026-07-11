@@ -1,5 +1,6 @@
 import type { Status } from "./types";
 import type { FluidReading, InspeccionVehiculo } from "./inspection";
+import { applyObsFluidOverrides } from "./obsFluids";
 import {
   fluidStatusFromPercent,
   isFluidOutOfServicePercent,
@@ -119,15 +120,22 @@ function statusFromAllFluids(inspeccion: InspeccionVehiculo): Status | null {
   return null;
 }
 
-/** Baliza fallida o fluidos en 1/4–49 % → a tener en cuenta. Altas/bajas → solo leyenda. */
+/** Baliza fallida o fluidos en 1/4–49 % → atención en panel. Luces bajas → amarillo en tablero. */
 export function isAttentionFromInspection(
   inspeccion: InspeccionVehiculo | undefined
 ): boolean {
   if (!inspeccion) return false;
 
+  if (!inspeccion.luces.bajas.ok) return true;
   if (!inspeccion.luces.baliza.ok) return true;
 
   return statusFromAllFluids(inspeccion) === "attention";
+}
+
+export function isAttentionFromLucesBajas(
+  inspeccion: InspeccionVehiculo | undefined
+): boolean {
+  return Boolean(inspeccion && !inspeccion.luces.bajas.ok);
 }
 
 export function buildNovedadTexto(observaciones: string): string {
@@ -206,7 +214,7 @@ export function shouldHideFromHistorial(texto: string): boolean {
   return isSinNovedadTexto(texto) || isHigieneOnlyTexto(texto);
 }
 
-/** Tablero: rojo solo si la última novedad declara el móvil fuera de servicio. */
+/** Tablero: rojo si FdS en novedad; amarillo si luces bajas quemadas; si no, verde. */
 export function resolveMobileBoardStatus(
   novedades: Array<{
     texto: string;
@@ -217,7 +225,13 @@ export function resolveMobileBoardStatus(
   if (novedades.length === 0) return "operational";
   const ultima = novedades[0];
   if (ultima.status === "outOfService") return "outOfService";
-  return resolveNovedadStatus(ultima.texto);
+  if (isVehiculoFueraDeServicioEnNovedad(ultima.texto)) return "outOfService";
+
+  const obs = stripHigieneLines(ultima.texto ?? "");
+  const insp = applyObsFluidOverrides(ultima.inspeccion, obs);
+  if (isAttentionFromLucesBajas(insp)) return "attention";
+
+  return "operational";
 }
 
 export function cleanNovedadTexto(texto: string): string {

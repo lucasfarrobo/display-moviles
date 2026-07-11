@@ -130,12 +130,11 @@ export function hasLucesCarreteraFallidas(inspeccion: InspeccionVehiculo): boole
   return hasLucesAltasFallidas(inspeccion) || hasLucesBajasFallidas(inspeccion);
 }
 
+/** Solo luces altas quemadas: leyenda en verde (no amarillo en tablero). */
 export function lucesPrecaucionTexto(inspeccion: InspeccionVehiculo): string | null {
-  const altas = hasLucesAltasFallidas(inspeccion);
-  const bajas = hasLucesBajasFallidas(inspeccion);
-  if (altas && bajas) return "Luces altas y bajas quemadas — precaución";
-  if (altas) return "Luces altas quemadas — precaución";
-  if (bajas) return "Luces bajas quemadas — precaución";
+  if (hasLucesAltasFallidas(inspeccion)) {
+    return "Luces altas quemadas — precaución";
+  }
   return null;
 }
 

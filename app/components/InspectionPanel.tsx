@@ -2,8 +2,8 @@
 
 import type { FluidReading, InspeccionVehiculo, LuzEstado } from "@/lib/inspection";
 import {
-  hasLucesCarreteraFallidas,
-  hasLuzFallida,
+  hasLucesAltasFallidas,
+  hasLucesBajasFallidas,
   lucesPrecaucionTexto,
 } from "@/lib/inspection";
 import { fluidGaugeColor } from "@/lib/fluidBands";
@@ -55,10 +55,12 @@ function LuzItem({
   label,
   luz,
   reviewOnly = false,
+  attentionOnly = false,
 }: {
   label: string;
   luz: LuzEstado;
   reviewOnly?: boolean;
+  attentionOnly?: boolean;
 }) {
   if (luz.ok) {
     return (
@@ -83,7 +85,28 @@ function LuzItem({
         <div>
           <span className="text-amber-300 text-xs font-semibold block">{label}</span>
           <span className="text-amber-400/80 text-[10px]">
-            A revisar — no funciona
+            Precaución — móvil operativo
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (attentionOnly) {
+    return (
+      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-amber-950/50 border border-amber-700">
+        <svg
+          viewBox="0 0 24 24"
+          className="w-4 h-4 text-amber-400 flex-shrink-0"
+          fill="currentColor"
+          aria-hidden
+        >
+          <path d="M12 2L1 21h22L12 2zm0 4.5l7.1 12.5H4.9L12 6.5zM11 10v5h2v-5h-2zm0 6v2h2v-2h-2z" />
+        </svg>
+        <div>
+          <span className="text-amber-300 text-xs font-semibold block">{label}</span>
+          <span className="text-amber-400/80 text-[10px]">
+            A tener en cuenta — luces bajas quemadas
           </span>
         </div>
       </div>
@@ -116,10 +139,11 @@ export function InspectionPanel({ inspeccion }: Props) {
   const alertaCritica = isOutOfServiceFromInspection(inspeccion);
   const alertaAtencion =
     !alertaCritica && isAttentionFromInspection(inspeccion);
-  const lucesFallidas = hasLuzFallida(inspeccion);
   const precaucionLuces = lucesPrecaucionTexto(inspeccion);
-  const soloPrecaucionLuces =
-    Boolean(precaucionLuces) && !alertaCritica && !alertaAtencion;
+  const soloPrecaucionAltas =
+    Boolean(precaucionLuces) &&
+    !alertaCritica &&
+    !hasLucesBajasFallidas(inspeccion);
 
   return (
     <div className="mb-4">
@@ -130,21 +154,24 @@ export function InspectionPanel({ inspeccion }: Props) {
             · fuera de servicio
           </span>
         )}
-        {alertaAtencion && (
+        {alertaAtencion && hasLucesBajasFallidas(inspeccion) && (
           <span className="ml-2 text-amber-400 normal-case font-normal">
-            · {lucesFallidas && !hasLucesCarreteraFallidas(inspeccion)
-              ? "luces a revisar"
-              : "a tener en cuenta"}
+            · luces bajas a revisar
           </span>
         )}
-        {soloPrecaucionLuces && (
+        {alertaAtencion && !hasLucesBajasFallidas(inspeccion) && (
           <span className="ml-2 text-amber-400 normal-case font-normal">
-            · precaución luces
+            · a tener en cuenta
+          </span>
+        )}
+        {soloPrecaucionAltas && (
+          <span className="ml-2 text-amber-400 normal-case font-normal">
+            · precaución luces altas
           </span>
         )}
       </h3>
 
-      {soloPrecaucionLuces && precaucionLuces && (
+      {soloPrecaucionAltas && precaucionLuces && (
         <div className="mb-3 px-2.5 py-2 rounded-lg bg-amber-950/40 border border-amber-800/50 text-amber-300 text-xs flex items-center gap-2">
           <span aria-hidden>⚠</span>
           {precaucionLuces} — móvil operativo
@@ -164,7 +191,11 @@ export function InspectionPanel({ inspeccion }: Props) {
         </p>
         <div className="grid grid-cols-1 gap-1.5">
           <LuzItem label="Luces altas" luz={inspeccion.luces.altas} reviewOnly />
-          <LuzItem label="Luces bajas" luz={inspeccion.luces.bajas} reviewOnly />
+          <LuzItem
+            label="Luces bajas"
+            luz={inspeccion.luces.bajas}
+            attentionOnly
+          />
           <LuzItem label="Baliza aérea" luz={inspeccion.luces.baliza} reviewOnly />
         </div>
       </div>
